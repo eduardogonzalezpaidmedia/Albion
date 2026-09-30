@@ -1,0 +1,6 @@
+name = "silver-master-proxy"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGIN = "*"

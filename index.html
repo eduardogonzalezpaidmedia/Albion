@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0E13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Silver Master">
+<title>Silver Master</title>
+<link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <img src="assets/icons/silver-master.svg" alt="" width="34" height="34">
+    <div><h1>SILVER MASTER</h1><p>Crafting &amp; Market Analyzer · Albion Online</p></div>
+  </div>
+  <div class="top-actions">
+    <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
+    <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs" aria-label="Módulos">
+  <button data-view="home" aria-current="page">Inicio</button>
+  <button data-view="calc">Calculadora</button>
+  <button data-view="scanner">Market Scanner</button>
+  <button data-view="bm">Black Market</button>
+  <button data-view="global">Mercado global</button>
+  <button data-view="routes">Rutas</button>
+  <button data-view="history">Historial</button>
+  <button data-view="finder">Mi silver</button>
+  <button data-view="settings">Ajustes</button>
+</nav>
+
+<div class="banner" id="staleBanner" hidden>⚠ No se pudo actualizar el mercado. Los cálculos utilizan el último dato disponible.</div>
+<div class="banner alert" id="alertBanner" hidden></div>
+
+<main id="main">
+  <p class="loading" id="loading">Cargando datos del juego…</p>
+
+  <!-- INICIO -->
+  <section class="view" id="view-home" hidden>
+    <div class="tiles">
+      <button class="tile" data-go="calc"><span class="t-k">01</span><b>Calculadora</b><span>Costo, profit y ROI de un objeto, con tus precios o los de AODP.</span></button>
+      <button class="tile" data-go="scanner"><span class="t-k">02</span><b>Market Scanner</b><span>Escanea muchos objetos y ordena por profit, ROI, silver/h o liquidez.</span></button>
+      <button class="tile" data-go="bm"><span class="t-k">03</span><b>Black Market</b><span>Fabricar y vender al Mercado Negro de Caerleon.</span></button>
+      <button class="tile" data-go="global"><span class="t-k">04</span><b>Mercado global</b><span>Precios de un objeto y sus materiales en todas las ciudades.</span></button>
+      <button class="tile" data-go="routes"><span class="t-k">05</span><b>Rutas</b><span>Compra → transporte → fabricación → transporte → venta.</span></button>
+      <button class="tile" data-go="history"><span class="t-k">06</span><b>Historial</b><span>Precio mínimo, máximo, promedio y volumen: 24 h a 90 días.</span></button>
+      <button class="tile wide" data-go="finder"><span class="t-k">07</span><b>¿Qué puedo hacer con mi silver?</b><span>Alternativas según tu capital, tiempo y riesgo.</span></button>
+    </div>
+    <div class="cols">
+      <section class="panel">
+        <div class="ph"><h2>Tu perfil</h2><button class="btn ghost" data-go="settings">Editar</button></div>
+        <dl class="kv" id="homeProfile"></dl>
+      </section>
+      <section class="panel">
+        <div class="ph"><h2>⭐ Favoritos</h2><button class="btn" id="refreshMarket">Actualizar mercado</button></div>
+        <div id="homeFavs"></div>
+        <p class="muted small" id="homeUpdated"></p>
+      </section>
+    </div>
+    <section class="panel">
+      <div class="ph"><h2>Datos</h2></div>
+      <p class="small muted" id="homeData"></p>
+    </section>
+  </section>
+
+  <!-- CALCULADORA -->
+  <section class="view" id="view-calc" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Crafting Calculator</h2><span class="muted small">Elige un objeto, pon la cantidad y consulta AODP o escribe tus precios.</span></div>
+      <div id="calcPicker"></div>
+    </section>
+    <div id="calcBody"></div>
+  </section>
+
+  <!-- SCANNER -->
+  <section class="view" id="view-scanner" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Market Scanner</h2></div>
+      <div id="scanFilters"></div>
+      <div class="go"><button class="cta" id="scanGo">🔍 ESCANEAR OPORTUNIDADES</button><div class="status"><div class="prog"><span id="scanBar"></span></div><p class="msg" id="scanMsg">Ajusta los filtros y escanea.</p></div></div>
+    </section>
+    <section class="panel" id="scanRes" hidden>
+      <div class="ph"><h2>Resultados</h2><div class="btns"><button class="btn" id="scanCsv">Exportar CSV</button><button class="btn" id="scanJson">Exportar JSON</button></div></div>
+      <p class="muted small">Ordena tocando los encabezados. Toca una fila para abrirla en la calculadora.</p>
+      <div id="scanTable"></div>
+    </section>
+  </section>
+
+  <!-- BLACK MARKET -->
+  <section class="view" id="view-bm" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Black Market Analyzer</h2><span class="muted small">Costo de fabricación + transporte vs. orden de compra del Mercado Negro.</span></div>
+      <div id="bmFilters"></div>
+      <div class="go"><button class="cta" id="bmGo">Escanear Mercado Negro</button><div class="status"><div class="prog"><span id="bmBar"></span></div><p class="msg" id="bmMsg">El Mercado Negro compra equipo; se le vende al instante (solo impuesto).</p></div></div>
+    </section>
+    <section class="panel" id="bmRes" hidden>
+      <div class="ph"><h2>Resultados</h2><div class="btns"><button class="btn" id="bmCsv">Exportar CSV</button><button class="btn" id="bmJson">Exportar JSON</button></div></div>
+      <div id="bmTable"></div>
+    </section>
+  </section>
+
+  <!-- MERCADO GLOBAL -->
+  <section class="view" id="view-global" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Mercado global</h2><span class="muted small">Compra y venta de un objeto en cada mercado, y dónde está más barato cada material.</span></div>
+      <div id="globalPicker"></div>
+      <div class="row gap"><label class="field inline"><span class="lbl">Calidad</span><select id="globalQ"></select></label><label class="field inline"><span class="lbl">Cantidad</span><input id="globalQty" type="number" min="1" value="10"></label><button class="btn" id="globalGo">Consultar</button></div>
+    </section>
+    <div id="globalBody"></div>
+  </section>
+
+  <!-- RUTAS -->
+  <section class="view" id="view-routes" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Market &amp; Route Analyzer</h2></div>
+      <div id="routePicker"></div>
+      <div id="routeForm"></div>
+    </section>
+    <div id="routeBody"></div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="view" id="view-history" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Historial de precios</h2></div>
+      <div id="histPicker"></div>
+      <div class="row gap wrap">
+        <label class="field inline"><span class="lbl">Mercado</span><select id="histLoc"></select></label>
+        <label class="field inline"><span class="lbl">Calidad</span><select id="histQ"></select></label>
+        <div class="seg" id="histRange"><button data-r="24h">24 h</button><button data-r="7d" aria-pressed="true">7 días</button><button data-r="30d">30 días</button><button data-r="90d">90 días</button></div>
+      </div>
+    </section>
+    <div id="histBody"></div>
+  </section>
+
+  <!-- FINDER -->
+  <section class="view" id="view-finder" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Silver Opportunity Finder</h2><span class="muted small">Alternativas con sus métricas. Tú decides cuál te conviene.</span></div>
+      <div id="finderForm"></div>
+      <div class="go"><button class="cta" id="finderGo">Buscar alternativas</button><div class="status"><div class="prog"><span id="finderBar"></span></div><p class="msg" id="finderMsg"></p></div></div>
+    </section>
+    <section class="panel" id="finderRes" hidden>
+      <div class="ph"><h2>Alternativas</h2><div class="btns"><button class="btn" id="finderCsv">Exportar CSV</button></div></div>
+      <div id="finderTable"></div>
+    </section>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="view-settings" hidden>
+    <div id="settingsBody"></div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <div class="ph"><h2 id="modalTitle">Detalle</h2><button class="btn ghost" id="modalClose" type="button">Cerrar</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crafting.js"></script>
+<script src="js/returnRate.js"></script>
+<script src="js/market.js"></script>
+<script src="js/profit.js"></script>
+<script src="js/scanner.js"></script>
+<script src="js/routes.js"></script>
+<script src="js/history.js"></script>
+<script src="js/finder.js"></script>
+<script src="js/alerts.js"></script>
+<script src="js/export.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/view-calculator.js"></script>
+<script src="js/view-market.js"></script>
+<script src="js/view-routes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
