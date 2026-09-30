@@ -116,6 +116,14 @@
       <p class="hint">Fuentes: impuestos ${src(S.taxes.sources)} · retorno ${src(S.return_rate.sources)} · foco ${src(S.focus.sources)}. ${U.esc(S.taxes.setup_fee_applies_to)}</p></section>
     <section class="panel"><div class="ph"><h2>Tiempos por ciclo (min)</h2><span class="muted small">Para calcular silver/hora</span></div>
       <div class="fields">${[['buy', 'Compra'], ['transport1', 'Transporte 1'], ['craft', 'Fabricación'], ['transport2', 'Transporte 2'], ['sell', 'Venta']].map(([k, l]) => `<label class="field"><span class="lbl">${l}</span><input data-min="${k}" type="number" min="0" value="${F.minutes[k]}"></label>`).join('')}</div></section>
+    <section class="panel"><div class="ph"><h2>Cantidad óptima</h2><span class="muted small">Usado en la calculadora, el Scanner y Black Market</span></div>
+      <div class="fields">
+        <label class="field"><span class="lbl">Vender en máximo (días)</span><input id="dDays" type="number" min="1" max="14" value="${F.demand.days}"></label>
+        <label class="field"><span class="lbl">Tu parte de las ventas (%)</span><input id="dShare" type="number" min="1" max="100" value="${F.demand.sharePct}"></label>
+        <label class="field"><span class="lbl">Seguridad (%)</span><input id="dConf" type="number" min="50" max="99" value="${F.demand.confidencePct}"></label>
+        <label class="field"><span class="lbl">Recuperas de lo no vendido (% del costo)</span><input id="dSalv" type="number" min="0" max="100" value="${F.demand.salvagePct}"></label>
+      </div>
+      <p class="hint">Reglas de la app, no del juego: la tendencia se considera «sube/baja» sobre ±1% diario, y un precio sobre la mayoría de los días recientes reduce tu parte (ver js/demand.js).</p></section>
     <section class="panel"><div class="ph"><h2>Datos y conexión</h2></div>
       <div class="fields">
         <label class="field"><span class="lbl">Precios de máximo (horas) en escáneres</span><input id="sAge" type="number" min="1" value="${F.maxAgeHours}"></label>
@@ -151,6 +159,7 @@
       Object.assign(p, { server: U.$('#sServer').value, city: U.$('#sCity').value, premium: U.$('#sPrem').value === '1', focus: U.$('#sFocus').value === '1', focusAvailable: +U.$('#sFocusAv').value || 0, ownSpec: Math.min(100, +U.$('#sSpec').value || 0), mastery: Math.min(100, +U.$('#sMast').value || 0), otherSpecsSum: +U.$('#sOther').value || 0, capital: +U.$('#sCap').value || 0, hours: +U.$('#sHours').value || 0, risk: U.$('#sRisk').value });
       Object.assign(f, { taxPremiumPct: num('sTaxP'), taxNoPremiumPct: num('sTaxN'), setupFeePct: num('sSetup'), craftingFee: +U.$('#sFee').value || 0, transportPerUnit: +U.$('#sTr').value || 0, focusSilverValue: num('sFocusVal'), dailyBonus: +U.$('#sDaily').value || 0, maxAgeHours: +U.$('#sAge').value || 12, cacheMinutes: num('sCache'), proxyUrl: U.$('#sProxy').value.trim() });
       U.$$('[data-min]').forEach(i => f.minutes[i.dataset.min] = +i.value || 0);
+      f.demand = { days: +U.$('#dDays').value || 3, sharePct: +U.$('#dShare').value || 30, confidencePct: +U.$('#dConf').value || 80, salvagePct: +U.$('#dSalv').value || 0 };
       SM.storage.saveProfile(p); SM.storage.savePrefs(f);
       U.$('#serverSel').value = p.server;
       applyApiConfig(); SM.api.clearCache();

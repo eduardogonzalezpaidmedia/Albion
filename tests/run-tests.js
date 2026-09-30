@@ -2,7 +2,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout };
 ctx.globalThis = ctx; vm.createContext(ctx);
-for (const f of ['../js/profit.js', '../js/returnRate.js', '../js/market.js', './fixtures.demo.js'])
+for (const f of ['../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', './fixtures.demo.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), ctx, { filename: f });
 const { SM, SM_DEMO: DEMO } = ctx;
 const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/settings.json'), 'utf8'));
@@ -79,5 +79,23 @@ t('ubicaciones con datos reales', [...SM.market.locationsWithData(DEMO.rows)].so
 t('confianza alta con datos frescos y volumen', SM.market.confidence({ ageMinutes: 5, hasBuy: true, hasSell: true, dailyVolume: 50, historyDays: 7 }) === 'Alta');
 t('confianza baja sin datos', SM.market.confidence({ ageMinutes: null, hasBuy: false, hasSell: false, dailyVolume: null }) === 'Baja');
 
+console.log('Cantidad óptima (DEMO)');
+const mk = (counts, prices) => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return { data: counts.map((c, i) => ({ item_count: c, avg_price: prices ? prices[i] : 1000, timestamp: new Date(d.getTime() - (counts.length - i) * 86400000).toISOString().slice(0, 19) })) }; };
+const flat = mk(Array(30).fill(100));
+const ser = SM.demand.dailySeries(flat, 30);
+t('serie de 30 días completa', ser.length === 30 && ser.every(x => x.count === 100));
+t('ventanas de 3 días suman 300', SM.demand.windowSums(ser, 3).every(v => v === 300));
+t('percentil 50 de [1..5] = 3', SM.demand.percentile([5, 1, 3, 2, 4], 0.5) === 3);
+const a1 = SM.demand.analyze({ histRow: flat, days: 3, share: 0.3, confidence: 0.8, salePrice: 1000, netUnit: 900, unitCost: 500, salvagePct: 0.5 });
+t('mercado estable: vendes 90 con 100% de prob.', a1.ok && a1.evalQ(90).prob === 1 && a1.evalQ(91).prob === 0);
+t('cantidad óptima = 90 (todo lo que absorbe el mercado)', a1.best.q === 90);
+t('cantidad segura al 80% = 90', a1.safe.q === 90);
+const up = mk(Array(30).fill(50), Array.from({ length: 30 }, (_, i) => 1000 + i * 20));
+t('tendencia al alza detectada', SM.demand.priceTrend(SM.demand.dailySeries(up, 30), 14).direction === 'sube');
+t('precio sobre casi todo lo reciente reduce la venta', SM.demand.pricePosition(ser.map((d, i) => ({ price: 1000 + i })), 5000).factor < 0.5);
+t('sin historial suficiente → no calcula', SM.demand.analyze({ histRow: mk([0, 0, 5]), days: 3, netUnit: 1, unitCost: 1 }).ok === false);
+const loss = SM.demand.analyze({ histRow: flat, days: 3, share: 0.3, salePrice: 1000, netUnit: 400, unitCost: 500, salvagePct: 0.5 });
+t('si pierdes plata la óptima es la mínima', loss.best.q === 1 && loss.best.expProfit < 0);
+t('venta inmediata no se penaliza por precio', SM.demand.analyze({ histRow: flat, days: 3, share: 0.3, salePrice: 99999, mode: 'instant', netUnit: 900, unitCost: 500 }).pos.factor === 1);
 console.log('\n' + pass + ' pruebas correctas, ' + fail + ' fallidas');
 process.exit(fail ? 1 : 0);

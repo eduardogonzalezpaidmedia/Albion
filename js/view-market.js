@@ -80,6 +80,15 @@
     }
   }
 
+
+  const demandCols = () => { const u = U(); return [
+      { key: 'opt', label: 'Cant. óptima', num: true, get: e => e.demand && e.demand.ok ? e.demand.best : null,
+        html: e => !e.demand ? '<span class="muted">—</span>' : !e.demand.ok ? '<span class="muted small" title="' + u.esc(e.demand.reason) + '">sin historial</span>' : `<b>${e.demand.best}</b><br><span class="small muted">segura ${Math.round(e.demand.conf * 100)}%: ${e.demand.safe || '—'}</span>` },
+      { key: 'prob', label: 'Prob. venta', num: true, get: e => e.demand && e.demand.ok ? e.demand.probCurrent : null,
+        html: e => e.demand && e.demand.ok ? `${Math.round(e.demand.probCurrent * 100)}%<br><span class="small muted">${e.calc.made} u en ${e.demand.days} d</span>` : '<span class="muted">—</span>' },
+      { key: 'trend', label: 'Precio', get: e => e.demand && e.demand.ok ? e.demand.trend : null,
+        html: e => e.demand && e.demand.ok && e.demand.trend ? `<span class="trend t-${e.demand.trend}">${e.demand.trend === 'sube' ? '▲ sube' : e.demand.trend === 'baja' ? '▼ baja' : '■ estable'}</span>` : '<span class="muted">—</span>' }
+    ]; };
   function scanCols(extra) {
     const u = U();
     return [
@@ -95,14 +104,14 @@
       { key: 'liq', label: 'Liquidez /día', num: true, get: e => e.liquidity ?? null, html: e => e.liquidity === undefined || e.liquidity === null ? '<span class="muted">—</span>' : e.liquidity.toLocaleString('es-CL', { maximumFractionDigits: 1 }) },
       { key: 'age', label: 'Antigüedad', get: e => e.oldestMinutes, html: e => u.ageBadgeMin(e.oldestMinutes) },
       { key: 'conf', label: 'Confianza', get: e => ({ Alta: 3, Media: 2, Baja: 1 })[e.confidence] || 0, html: e => u.confBadge(e.confidence) }
-    ].concat(extra || []);
+    ].concat(demandCols(), extra || []);
   }
   const csvCols = [
     { label: 'Objeto', get: e => e.item.name }, { label: 'ID', get: e => e.item.item_id }, { label: 'Tier', get: e => e.item.tier }, { label: 'Encantamiento', get: e => e.item.enchantment },
     { label: 'Cantidad', get: e => e.calc.made }, { label: 'Retorno %', get: e => (e.rr.rate * 100).toFixed(2) }, { label: 'Mercado venta', get: e => e.sale.location },
     { label: 'Precio venta', get: e => e.sale.price }, { label: 'Costo total', get: e => Math.round(e.calc.totalCost) }, { label: 'Ingreso neto', get: e => Math.round(e.calc.sale.net) },
     { label: 'Profit', get: e => Math.round(e.calc.profit) }, { label: 'ROI %', get: e => e.calc.roi.toFixed(2) }, { label: 'Silver/h', get: e => e.calc.silverPerHour ? Math.round(e.calc.silverPerHour) : '' },
-    { label: 'Liquidez/día', get: e => e.liquidity ?? '' }, { label: 'Antigüedad min', get: e => e.oldestMinutes === null ? '' : Math.round(e.oldestMinutes) }, { label: 'Confianza', get: e => e.confidence }
+    { label: 'Liquidez/día', get: e => e.liquidity ?? '' }, { label: 'Cantidad óptima', get: e => e.demand && e.demand.ok ? e.demand.best : '' }, { label: 'Cantidad segura', get: e => e.demand && e.demand.ok ? e.demand.safe : '' }, { label: 'Prob. venta %', get: e => e.demand && e.demand.ok ? Math.round(e.demand.probCurrent * 100) : '' }, { label: 'Tendencia precio', get: e => e.demand && e.demand.ok ? e.demand.trend : '' }, { label: 'Antigüedad min', get: e => e.oldestMinutes === null ? '' : Math.round(e.oldestMinutes) }, { label: 'Confianza', get: e => e.confidence }
   ];
   const openInCalc = e => SM.views.calc.open(e.item, true, { units: e.calc.units, craftCity: e.context ? e.context.craftCity : undefined, sellMarket: e.sale.location, saleMode: e.calc.sale && e.calc.sale.mode, quality: 1 });
 
@@ -144,6 +153,7 @@
         { key: 'roi', label: 'ROI', num: true, get: e => e.calc.roi, html: e => u.pct(e.calc.roi) },
         { key: 'liq', label: 'Vend./día MN', num: true, get: e => e.liquidity ?? null, html: e => e.liquidity === undefined || e.liquidity === null ? '—' : e.liquidity.toLocaleString('es-CL', { maximumFractionDigits: 1 }) },
         { key: 'conf', label: 'Confianza', get: e => e.confidence, html: e => u.confBadge(e.confidence) },
+        ...demandCols(),
         { key: 'hist', label: 'Historial', sortable: false, get: () => '', html: () => '<button class="btn ghost" data-h="1">Ver</button>' }
       ], { sortKey: 'profit', onRow: openInCalc, empty: 'Ninguna oportunidad en el Mercado Negro con estos filtros.' });
       u.$$('#bmTable [data-h]').forEach(b => b.onclick = ev => { const tr = ev.target.closest('tr'); const e = res.rows[+tr.dataset.i]; SM.views.history.open(e.item, 'Black Market'); });

@@ -52,6 +52,7 @@ silver-master/
 │   ├── routes.js           # análisis de rutas
 │   ├── history.js          # historial y gráfico SVG
 │   ├── finder.js           # Silver Opportunity Finder (perfiles de riesgo)
+│   ├── demand.js           # cantidad óptima: probabilidad de venta, tendencia de precio, ganancia esperada
 │   ├── alerts.js           # reglas de alertas
 │   ├── export.js           # CSV / JSON
 │   ├── ui.js               # componentes de interfaz (tablas ordenables, buscador, detalle del cálculo)
@@ -72,7 +73,7 @@ silver-master/
 │   └── build_bundle.py           # regenera data/game-data.js
 ├── tests/
 │   ├── fixtures.demo.js    # datos DEMO ficticios
-│   └── run-tests.js        # 39 pruebas del motor
+│   └── run-tests.js        # 50 pruebas del motor
 ├── worker/
 │   ├── cloudflare-worker.js  # proxy opcional
 │   └── wrangler.toml
@@ -156,13 +157,25 @@ Beneficio económico = profit − foco usado × valor del foco
 ```
 Si falta cualquier dato (receta, precio de un material, precio de venta o retorno) el resultado es **DATOS INSUFICIENTES** y no se muestra una rentabilidad ficticia.
 
+## Cantidad óptima (`js/demand.js`)
+
+En la Calculadora (sección **Cantidad óptima**) y como columnas en Scanner y Black Market.
+
+1. **Ventas en tu plazo:** con las ventas diarias de los últimos 30 días (AODP, `time-scale=24`) se arman todas las ventanas de N días seguidos. Se descarta el día en curso porque está incompleto.
+2. **Tu parte:** cada ventana se multiplica por tu parte del mercado. Si publicas una orden de venta y tu precio está sobre la mayoría de los días recientes, tu parte se reduce (heurística de la app: ×0,7 sobre la mediana, ×0,4 sobre el 75%, ×0,15 sobre el 90%). En venta inmediata no se reduce.
+3. **Probabilidad de vender Q unidades** = proporción de ventanas en que tu parte ≥ Q.
+4. **Tendencia del precio:** regresión lineal de los últimos 14 días; el precio esperado se ajusta a mitad del plazo (acotado a ±30%). «Sube/baja» = más de ±1% diario.
+5. **Ganancia esperada(Q)** = ventas esperadas × ingreso neto esperado + (Q − ventas esperadas) × % del costo que recuperas − Q × costo unitario. La **cantidad óptima** es la de mayor ganancia esperada; la **cantidad segura** es la mayor que alcanza tu nivel de seguridad (80% por defecto).
+
+Límites: AODP solo registra las ventas de jugadores que usan su cliente, tu parte del mercado es una suposición, y un parche o evento puede cambiar la demanda. Es una estimación, no una garantía.
+
 ## Fases
 
 | Fase | Estado |
 |---|---|
 | 1 Interfaz | Completa |
 | 2 Objetos y recetas | Completa (7.363 objetos desde los datos del juego) |
-| 3 Motor de cálculo | Completo, 39 pruebas |
+| 3 Motor de cálculo | Completo, 50 pruebas (incluye cantidad óptima) |
 | 4 AODP | Completa (directo o proxy, caché, reintentos, validación de mercados) |
 | 5 Historial | Completo |
 | 6 Black Market | Completo |

@@ -108,11 +108,12 @@
       const V = {};
       for (const loc in byLoc) {
         const h = await SM.api.getHistory(byLoc[loc], [loc], [qual], 24, { onProgress: (d, t) => prog('Liquidez', d, t) });
-        h.rows.forEach(r => { V[r.item_id + '|' + r.location] = { vol: SM.market.dailyVolume(r, 7), days: (r.data || []).length }; });
+        h.rows.forEach(r => { V[r.item_id + '|' + r.location] = { vol: SM.market.dailyVolume(r, 7), days: (r.data || []).length, row: r }; });
       }
       top.forEach(e => {
         const v = V[e.item.item_id + '|' + e.sale.location];
-        e.liquidity = v ? v.vol : null; e.historyDays = v ? v.days : 0;
+        e.liquidity = v ? v.vol : null; e.historyDays = v ? v.days : 0; e.histRow = v ? v.row : null;
+        e.demand = demandFor(e, c);
       });
     }
     // límite por liquidez (Finder / riesgo)
@@ -123,7 +124,7 @@
         if (cap < 1) return null;
         if (cap >= e.calc.made) return e;
         const ne = evaluate(e.item, idx, Object.assign({}, c, { units: cap }));
-        ne.liquidity = e.liquidity; ne.historyDays = e.historyDays; ne.cappedByLiquidity = true;
+        ne.liquidity = e.liquidity; ne.historyDays = e.historyDays; ne.cappedByLiquidity = true; ne.histRow = e.histRow; ne.demand = demandFor(ne, c);
         return ne;
       }).filter(Boolean).filter(e => e.calc.ok && e.calc.profit >= (f.minProfit || 0));
     }
@@ -136,6 +137,18 @@
     return { rows, invalid, scanned: items.length, idx, stale: p1.stale || p2.stale, errors: [...p1.errors, ...p2.errors], context: c };
   }
 
-  SM.engine = { context, returnFor, evaluate };
+  /** Cantidad óptima con los ajustes de demanda de Preferencias. */
+  function demandFor(e, c) {
+    if (!e.histRow || !SM.demand || !e.calc.ok) return null;
+    const d = (c.prefs && c.prefs.demand) || { days: 3, sharePct: 30, confidencePct: 80, salvagePct: 50 };
+    const a = SM.demand.analyze({ histRow: e.histRow, days: d.days, share: d.sharePct / 100, confidence: d.confidencePct / 100,
+      salePrice: e.sale.price, mode: e.calc.sale.mode, netUnit: e.calc.sale.net / e.calc.made, unitCost: e.calc.totalCost / e.calc.made,
+      salvagePct: d.salvagePct / 100, yieldN: e.calc.yieldN });
+    if (!a.ok) return { ok: false, reason: a.reason };
+    return { ok: true, best: a.best.q, bestProfit: a.best.expProfit, safe: a.safe ? a.safe.q : 0, conf: a.conf,
+      probCurrent: a.evalQ(e.calc.made).prob, trend: a.trend ? a.trend.direction : null, days: a.days };
+  }
+
+  SM.engine = { context, returnFor, evaluate, demandFor };
   SM.scanner = { scan };
 })(typeof window !== 'undefined' ? window : globalThis);

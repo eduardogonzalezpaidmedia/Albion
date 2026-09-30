@@ -173,3 +173,7 @@ td input{width:110px;padding:6px 8px}
   .cta{width:100%}
   .kpi b{font-size:19px}
 }
+
+.trend{font-size:12px;font-weight:600;white-space:nowrap}.t-sube{color:var(--pos)}.t-baja{color:var(--neg)}.t-estable{color:var(--muted)}
+tr.opt td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+tr.safe td{background:color-mix(in srgb,var(--pos) 8%,transparent)}

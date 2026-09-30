@@ -23,14 +23,15 @@
     cacheMinutes: null, proxyUrl: '', focusSilverValue: null,
     transportPerUnit: 0, craftingFee: 0, dailyBonus: 0,
     minutes: { buy: 10, transport1: 10, craft: 5, transport2: 10, sell: 10 },
-    maxAgeHours: 12, currency: 'plata', language: 'es'
+    maxAgeHours: 12, currency: 'plata', language: 'es',
+    demand: { days: 3, sharePct: 30, confidencePct: 80, salvagePct: 50 }
   };
 
   SM.storage = {
     get, set, remove,
     profile: () => Object.assign({}, DEFAULT_PROFILE, get('profile', {})),
     saveProfile: p => set('profile', p),
-    prefs: () => { const p = Object.assign({}, DEFAULT_PREFS, get('prefs', {})); p.minutes = Object.assign({}, DEFAULT_PREFS.minutes, p.minutes || {}); return p; },
+    prefs: () => { const p = Object.assign({}, DEFAULT_PREFS, get('prefs', {})); p.minutes = Object.assign({}, DEFAULT_PREFS.minutes, p.minutes || {}); p.demand = Object.assign({}, DEFAULT_PREFS.demand, p.demand || {}); return p; },
     savePrefs: p => set('prefs', p),
     favorites: () => get('favorites', []),
     toggleFavorite: id => { const f = get('favorites', []); const i = f.indexOf(id); if (i >= 0) f.splice(i, 1); else f.push(id); set('favorites', f); return i < 0; },

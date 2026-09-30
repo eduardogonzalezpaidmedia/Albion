@@ -97,6 +97,15 @@
     </section>
     <section class="panel"><div class="ph"><h2>Materiales</h2><span class="muted small" id="cPricesAge"></span></div><div id="cMats"></div></section>
     <section class="panel"><div class="ph"><h2>Resultado</h2><div class="btns"><button class="btn" id="cLog">Detalle del cálculo</button><button class="btn" id="cCsv">CSV</button><button class="btn" id="cJson">JSON</button><button class="btn ghost" id="cHist">Historial</button><button class="btn ghost" id="cRoute">Rutas</button></div></div><div id="cResult"></div></section>
+    <section class="panel"><div class="ph"><h2>Cantidad óptima</h2><span class="muted small">¿Cuántas fabricar según lo que se vende y hacia dónde va el precio? Estimación, no garantía.</span></div>
+      <div class="fields">
+        <label class="field"><span class="lbl">Vender en máximo (días)</span><input id="oDays" type="number" min="1" max="14" value="${F.demand.days}"></label>
+        <label class="field"><span class="lbl">Tu parte de las ventas (%)</span><input id="oShare" type="number" min="1" max="100" value="${F.demand.sharePct}"><span class="hint">Cuánto de lo que se vende al día crees que te llevas tú.</span></label>
+        <label class="field"><span class="lbl">Seguridad que quieres (%)</span><input id="oConf" type="number" min="50" max="99" value="${F.demand.confidencePct}"></label>
+        <label class="field"><span class="lbl">Recuperas de lo no vendido (% del costo)</span><input id="oSalv" type="number" min="0" max="100" value="${F.demand.salvagePct}"><span class="hint">Si no se vende a tiempo: rematas, lo usas o lo vendes después.</span></label>
+      </div>
+      <div class="btns"><button class="btn primary" id="oGo">Calcular con el historial (30 días)</button></div>
+      <div id="cOpt"></div></section>
     <section class="panel"><div class="ph"><h2>Comparación de ventas</h2><span class="muted small">Profit y ROI vendiendo en cada mercado, con los mismos costos.</span></div>
       <div class="row gap"><label class="field inline"><span class="lbl">Tu precio de venta (manual)</span><input id="cManualSale" type="number" min="0" placeholder="Sin datos"></label><p class="hint">Si lo escribes, reemplaza el precio de AODP en el resultado.</p></div>
       <div id="cSales"></div></section>`;
@@ -113,6 +122,8 @@
     on('cJson', 'click', () => S.last && exportCalc('json'));
     on('cHist', 'click', () => SM.views.history.open(it));
     on('cRoute', 'click', () => SM.views.routes.open(it));
+    on('oGo', 'click', runOptimal);
+    ['oDays', 'oShare', 'oConf', 'oSalv'].forEach(id => on(id, 'input', () => S.hist && renderOptimal()));
   }
 
   function evalWith(over) {
@@ -192,6 +203,48 @@
         <td class="n silver">${x.loc === 'Black Market' ? '<span class="muted">No aplica</span>' : x.sell ? u.fmt(x.sell.price) : '<span class="muted">Sin datos</span>'}</td><td>${x.sell ? u.ageBadge(x.sell.date) : ''}</td>
         <td class="n ${x.eo ? u.signCls(x.eo.calc.profit) : ''}">${x.eo ? u.fmt(x.eo.calc.profit) : '—'}</td><td class="n">${x.eo ? u.pct(x.eo.calc.roi) : '—'}</td></tr>`).join('')}</tbody></table></div>
       <p class="hint">La orden de compra es lo que obtienes vendiendo ahora. La orden de venta es el precio anunciado: para cobrarlo publicas una orden (paga publicación) y esperas a que alguien compre.</p>`;
+  }
+
+  async function runOptimal() {
+    const u = U(), e = S.last;
+    if (!e || !e.calc.ok) { u.$('#cOpt').innerHTML = '<p class="insufficient">Primero necesitas un resultado completo (precios de materiales y de venta).</p>'; return; }
+    let loc = e.sale.location;
+    if (loc === 'Manual') { const s = u.$('#cSell').value; loc = s === 'best' ? SM.storage.profile().city : s; }
+    const q = S.item.quality_supported && u.$('#cQ') ? +u.$('#cQ').value : 1;
+    u.$('#oGo').disabled = true; u.$('#cOpt').innerHTML = '<p class="muted">Consultando historial de ' + u.esc(loc === 'Black Market' ? 'Mercado Negro' : loc) + '…</p>';
+    try {
+      const h = await SM.api.getHistory([S.item.item_id], [loc], [q], 24);
+      S.hist = { row: h.rows.find(r => r.location === loc) || h.rows[0] || null, loc };
+      renderOptimal();
+    } catch (err) { u.$('#cOpt').innerHTML = '<p class="insufficient">⚠ No se pudo consultar el historial: ' + u.esc(err.message) + '</p>'; }
+    finally { u.$('#oGo').disabled = false; }
+  }
+  function renderOptimal() {
+    const u = U(), e = S.last; if (!S.hist || !e || !e.calc.ok) return;
+    const v = id => +u.$('#' + id).value;
+    const F = SM.storage.prefs(); F.demand = { days: v('oDays') || 3, sharePct: v('oShare') || 30, confidencePct: v('oConf') || 80, salvagePct: v('oSalv') }; SM.storage.savePrefs(F);
+    const c = e.calc;
+    const a = SM.demand.analyze({ histRow: S.hist.row, days: F.demand.days, share: F.demand.sharePct / 100, confidence: F.demand.confidencePct / 100,
+      salePrice: e.sale.price, mode: c.sale.mode, netUnit: c.sale.net / c.made, unitCost: c.totalCost / c.made, salvagePct: F.demand.salvagePct / 100, yieldN: c.yieldN });
+    if (!a.ok) { u.$('#cOpt').innerHTML = '<p class="insufficient">DATOS INSUFICIENTES — ' + u.esc(a.reason) + '</p>'; return; }
+    const cur = a.evalQ(c.made);
+    const tr = a.trend;
+    const trTxt = tr ? `<span class="trend t-${tr.direction}">${tr.direction === 'sube' ? '▲ Sube' : tr.direction === 'baja' ? '▼ Baja' : '■ Estable'}</span> ${u.pct(tr.pctPerDay)} por día (últimos ${tr.points} días)` : 'Sin datos de precio suficientes';
+    const rows = SM.demand.sampleRows(a, 9);
+    const locN = S.hist.loc === 'Black Market' ? 'Mercado Negro' : S.hist.loc;
+    u.$('#cOpt').innerHTML = `
+      <div class="kpis">
+        <div class="kpi"><span class="lbl">Se venden en ${a.days} días</span><b>${u.fmt(a.median)}</b><span class="s">mediana en ${u.esc(locN)} · en el 80% de los casos al menos ${u.fmt(a.p20)}</span></div>
+        <div class="kpi"><span class="lbl">Precio</span><b style="font-size:16px">${trTxt}</b><span class="s">precio esperado al vender: ${u.pct((a.priceAdj - 1) * 100)} vs hoy</span></div>
+        <div class="kpi"><span class="lbl">Tu precio frente al historial</span><b style="font-size:16px">${u.esc(a.pos.label)}</b><span class="s">${a.pos.rank === null ? '' : 'más alto que el ' + Math.round(a.pos.rank * 100) + '% de los días'} · tu parte efectiva ${u.pct(a.share * 100)}</span></div>
+        <div class="kpi pos"><span class="lbl">Cantidad óptima</span><b>${a.best.q}</b><span class="s">mayor ganancia esperada: ${u.fmt(a.best.expProfit)} · vendes todo con ${Math.round(a.best.prob * 100)}% de prob.</span></div>
+        <div class="kpi"><span class="lbl">Cantidad segura (${Math.round(a.conf * 100)}%)</span><b>${a.safe ? a.safe.q : '—'}</b><span class="s">${a.safe ? 'ganancia esperada ' + u.fmt(a.safe.expProfit) : 'ninguna cantidad llega a esa seguridad'}</span></div>
+        <div class="kpi"><span class="lbl">Tu cantidad actual (${c.made})</span><b>${Math.round(cur.prob * 100)}%</b><span class="s">prob. de vender todo · esperas vender ${u.fmtQ(cur.expSold)}</span></div>
+      </div>
+      <div class="tablewrap"><table class="grid-table"><thead><tr><th class="n">Cantidad</th><th class="n">Prob. de vender todo en ${a.days} d</th><th class="n">Vendes (esperado)</th><th class="n">Ganancia esperada</th><th></th></tr></thead>
+      <tbody>${rows.map(r => `<tr class="${r.q === a.best.q ? 'opt' : a.safe && r.q === a.safe.q ? 'safe' : ''}"><td class="n">${r.q}${r.q === a.best.q ? ' ★' : ''}</td><td class="n">${Math.round(r.prob * 100)}%</td><td class="n">${u.fmtQ(r.expSold)}</td><td class="n ${u.signCls(r.expProfit)}">${u.fmt(r.expProfit)}</td><td><button class="btn ghost" data-useq="${r.q}">Usar</button></td></tr>`).join('')}</tbody></table></div>
+      <p class="hint">Cómo se calcula: se toman las ventas diarias de los últimos 30 días en ${u.esc(locN)} y se miran todas las ventanas de ${a.days} días. La probabilidad es la parte de esas ventanas en que tu porción (${u.pct(a.share * 100)}) alcanza para vender la cantidad. La ganancia esperada suma lo que vendes al precio esperado según la tendencia y lo que recuperas (${F.demand.salvagePct}% del costo) de lo que no vendes. ★ = mayor ganancia esperada. AODP solo registra parte de las ventas del juego. ${a.critical !== null ? 'Regla del modelo: conviene fabricar una unidad más mientras la probabilidad de venderla supere el ' + Math.round(a.critical * 100) + '% (pérdida por unidad no vendida ÷ (margen + pérdida)).' : ''}</p>`;
+    u.$$('[data-useq]', u.$('#cOpt')).forEach(b => b.onclick = () => { u.$('#cUnits').value = b.dataset.useq; renderMatsQty(); update(); renderOptimal(); u.toast('Cantidad: ' + b.dataset.useq); });
   }
 
   function exportCalc(kind) {
