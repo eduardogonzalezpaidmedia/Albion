@@ -24,6 +24,28 @@
     b.sales.push({ id: uid(), units, unitPrice: price, mode: s.mode, date: s.date || Date.now(), net: gross - tax - setup });
     save(list); return b;
   }
+  /* ---------- operaciones (Market Intelligence) ----------
+     status: 'planned' (guardada, aún no ejecutada) · 'active' (comprada/fabricada, vendiendo) · 'closed' (terminada).
+     Los lotes antiguos sin status cuentan como activos o cerrados según sus ventas. */
+  function planOp(r) {
+    const list = all();
+    const b = { id: uid(), item_id: r.itemId, location: r.targetCity, units: r.quantity, totalCost: r.totalInvestment, date: Date.now(), note: r.opLabel + ' · ' + r.sourceCity + ' → ' + r.targetCity, sales: [], status: 'planned',
+      plan: { op: r.op, operation: r.operation, source: r.sourceCity, target: r.targetCity, saleMode: r.saleMode, unitCost: r.buyPrice, targetPrice: r.targetSellPrice,
+        estProfit: r.estimatedNetProfit, estRoi: r.estimatedRoiPercent, estHours: r.estimatedSaleHours, rate: r.ratePerDay, risk: r.risk, confidence: r.confidence, strategy: r.strategy, createdAt: Date.now(), dataTimestamp: r.dataTimestamp } };
+    list.unshift(b); save(list); return b;
+  }
+  /** Pasa una operación planificada a activa con lo que REALMENTE compraste/fabricaste. */
+  function activate(id, real) {
+    const list = all(); const b = list.find(x => x.id === id); if (!b) return null;
+    b.status = 'active'; b.date = real && real.date || Date.now();
+    if (real && real.units > 0) b.units = Math.round(real.units);
+    if (real && real.totalCost >= 0) b.totalCost = +real.totalCost;
+    if (b.plan && b.plan.rate > 0 && real && real.units > 0 && b.plan.estHours) b.plan.estHours = Math.round(b.units / b.plan.rate * 24);
+    save(list); return b;
+  }
+  function close(id) { const list = all(); const b = list.find(x => x.id === id); if (b) { b.status = 'closed'; b.closedAt = Date.now(); save(list); } return b; }
+  function statusOf(b) { if (b.status === 'planned') return 'planned'; if (b.status === 'closed') return 'closed'; return stats(b).done ? 'closed' : 'active'; }
+
   function removeBatch(id) { save(all().filter(b => b.id !== id)); }
   function removeSale(batchId, saleId) { const list = all(); const b = list.find(x => x.id === batchId); if (b) b.sales = b.sales.filter(s => s.id !== saleId); save(list); }
 
@@ -46,7 +68,7 @@
   }
 
   function totals(list) {
-    list = list || all();
+    list = (list || all()).filter(b => b.status !== 'planned');
     let invested = 0, net = 0, costSold = 0, units = 0, sold = 0;
     list.forEach(b => { const s = stats(b); invested += b.totalCost; net += s.net; costSold += s.unitCost * s.sold; units += b.units; sold += s.sold; });
     return { batches: list.length, invested, net, realizedProfit: net - costSold, units, sold, stockValue: invested - costSold };
@@ -76,5 +98,5 @@
     list.sort((a, b) => b.date - a.date); save(list); return clean.length;
   }
 
-  SM.journal = { all, addBatch, addSale, removeBatch, removeSale, stats, totals, realShare, exportJSON, importJSON };
+  SM.journal = { all, planOp, activate, close, statusOf, addBatch, addSale, removeBatch, removeSale, stats, totals, realShare, exportJSON, importJSON };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -7,6 +7,7 @@
   const cache = new Map();          // url -> {t, data}
   const status = { state: 'unknown', mode: 'direct', message: '', lastOk: null, lastError: null, requests: 0 };
   const listeners = [];
+  const priceListeners = [];           // reciben cada lote de precios nuevo (historial propio)
 
   function configure(o) {
     Object.assign(cfg, o || {});
@@ -69,6 +70,8 @@
     const ids = [...new Set(itemIds)];
     const tasks = chunkIds(ids, cfg.maxUrl).map(g => () => fetchJSON(url('/api/v2/stats/prices/' + g.map(encodeURIComponent).join(',') + '.json', { locations, qualities }), opts.force).catch(e => ({ error: e.message, data: [] })));
     const res = await pool(tasks, cfg.concurrency, opts.onProgress);
+    const fresh = res.filter(r => !r.fromCache && r.data).flatMap(r => r.data);
+    if (fresh.length) priceListeners.forEach(fn => { try { fn(fresh); } catch (e) { } });
     return {
       rows: res.flatMap(r => r.data || []),
       stale: res.some(r => r.stale), errors: res.filter(r => r.error).map(r => r.error),
@@ -102,5 +105,5 @@
 
   function clearCache() { cache.clear(); }
 
-  SM.api = { configure, onStatus, getPrices, getHistory, probe, clearCache, status: () => Object.assign({}, status), _url: url, _chunk: chunkIds };
+  SM.api = { configure, onStatus, onPrices: fn => priceListeners.push(fn), getPrices, getHistory, probe, clearCache, status: () => Object.assign({}, status), _url: url, _chunk: chunkIds };
 })(typeof window !== 'undefined' ? window : globalThis);

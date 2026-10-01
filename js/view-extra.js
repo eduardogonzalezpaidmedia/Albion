@@ -349,7 +349,7 @@
     u.toast('Revisa los datos y toca «Agregar lote».');
   };
   journal.render = function () {
-    const u = U(), list = SM.journal.all(), T = SM.journal.totals(list);
+    const u = U(), list = SM.journal.all().filter(b => b.status !== 'planned'), T = SM.journal.totals(list);
     u.$('#jKpis').innerHTML = `
       <div class="kpi"><span class="lbl">Lotes</span><b>${T.batches}</b><span class="s">${u.fmt(T.units)} unidades fabricadas</span></div>
       <div class="kpi"><span class="lbl">Invertido</span><b>${u.fmt(T.invested)}</b><span class="s">stock sin vender a costo: ${u.fmt(T.stockValue)}</span></div>

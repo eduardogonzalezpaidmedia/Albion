@@ -194,3 +194,46 @@ label.btn{display:inline-flex;align-items:center}
 .miss-det summary{cursor:pointer;color:var(--gold);padding:6px 0}
 .miss-list{list-style:none;margin:8px 0 0;padding:0}
 .miss-list li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line)}
+/* v1.3 — Market Intelligence */
+.isubnav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.isubnav::-webkit-scrollbar{display:none}
+.isubnav button{flex:0 0 auto;background:var(--bg2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:7px 13px;font:600 13px var(--display);cursor:pointer;white-space:nowrap}
+.isubnav button[aria-current="page"]{color:var(--bg);background:var(--gold);border-color:var(--gold)}
+.isubnav .cnt{opacity:.75;font-family:var(--mono);margin-left:3px}
+.strats{margin-bottom:10px}
+.rk{display:inline-block;font:600 12px var(--display);padding:2px 9px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.rk.warn{color:var(--warn)}
+.recs{display:grid;gap:10px;margin-top:10px}
+.rec,.op{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px}
+.rec.inport{border-color:color-mix(in srgb,var(--gold) 55%,var(--line))}
+.rec header,.op header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.rec .route,.op .route{margin:0;color:var(--muted)}
+.rec .why{margin:0;color:var(--muted)}
+.rec .btns,.op .btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.tops{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.top{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:12px;display:grid;gap:4px;align-content:start}
+.top .lbl{font:600 11px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+.top .btn{justify-self:start;margin-top:4px}
+.alist{margin:0;padding-left:18px;display:grid;gap:5px;font-size:14px}
+.alist .al-drop,.alist .al-loss{color:var(--neg)} .alist .al-slow,.alist .al-late,.alist .al-stale{color:var(--warn)} .alist .al-up,.alist .al-target{color:var(--pos)}
+.as-list{margin:6px 0;padding-left:18px;display:grid;gap:5px}
+.qa{display:grid;gap:2px;padding:9px 0;border-bottom:1px solid var(--line)}
+.qa .q{font:600 13px var(--display);color:var(--gold)}
+.chartbox{overflow-x:auto}
+tr.hl td{background:color-mix(in srgb,var(--gold) 8%,transparent)}
+pre.json{white-space:pre-wrap;word-break:break-word;font:12px/1.45 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:320px;overflow:auto}
+.chatlog{display:grid;gap:10px;margin:12px 0;max-height:62vh;overflow-y:auto;padding-right:4px}
+.msgb{border-radius:12px;padding:10px 12px;max-width:94%;font-size:14.5px}
+.msgb p{margin:0 0 6px} .msgb p:last-child{margin-bottom:0}
+.msgb.me{justify-self:end;background:color-mix(in srgb,var(--gold) 16%,var(--bg2));border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line))}
+.msgb.bot{justify-self:start;background:var(--bg2);border:1px solid var(--line)}
+.chatin{display:flex;gap:8px}
+.chatin input{flex:1;min-width:0}
+.sugg{max-height:120px;overflow-y:auto}
+.confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:8px 10px;border:1px solid var(--neg);border-radius:8px}
+.row.wrap{flex-wrap:wrap;align-items:flex-end}
+.opform{border-top:1px dashed var(--line);padding-top:8px}
+.isub h3{margin:16px 0 8px;font:600 15px var(--display)}
+.modal-card>*,#modalBody,.isub,.isub .panel{min-width:0}
+#modalBody{overflow-wrap:anywhere}

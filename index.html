@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.2">
+<html lang="es" data-version="1.3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.2">
+<link rel="stylesheet" href="css/style.css?v=1.3">
 </head>
 <body>
 <header class="topbar">
@@ -20,13 +20,14 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.2</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.3</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
 
 <nav class="tabs" id="tabs" aria-label="Módulos">
   <button data-view="home" aria-current="page">Inicio</button>
+  <button data-view="intel">Market Intelligence</button>
   <button data-view="calc">Calculadora</button>
   <button data-view="scanner">Market Scanner</button>
   <button data-view="bm">Black Market</button>
@@ -162,6 +163,62 @@
     </section>
   </section>
 
+  <!-- MARKET INTELLIGENCE -->
+  <section class="view" id="view-intel" hidden>
+    <section class="panel intel-head">
+      <div class="ph"><h2>Market Intelligence</h2><span class="muted small">Oportunidades, rotación, riesgo e inversión con datos de AODP. Estimaciones, no garantías.</span></div>
+      <nav class="isubnav" id="intelNav" aria-label="Secciones de Market Intelligence"></nav>
+    </section>
+    <div class="isub" id="isub-panel">
+      <section class="panel"><div class="ph"><h2>Panel general</h2><div class="btns"><button class="btn primary" id="ipRefresh">Actualizar datos y recalcular</button><button class="btn" id="ipGo">Buscar oportunidades</button></div></div>
+        <p class="msg small" id="ipMsg"></p><div class="kpis" id="ipKpis"></div></section>
+      <section class="panel"><div class="ph"><h2>Mejor oportunidad por plazo</h2></div><div id="ipTop"></div></section>
+      <section class="panel"><div class="ph"><h2>Alertas</h2></div><div id="ipAlerts"></div></section>
+      <section class="panel"><div class="ph"><h2>Aprendizaje con tus resultados</h2></div><div id="ipLearn"></div></section>
+    </div>
+    <div class="isub" id="isub-opps" hidden>
+      <section class="panel"><div class="ph"><h2>Buscar oportunidades</h2><span class="muted small">Compra y reventa · refinamiento · fabricación · Mercado Negro · arbitraje</span></div>
+        <div id="ioForm"></div>
+        <div class="go"><button class="cta" id="ioGo">Buscar oportunidades</button><button class="btn" id="ioRecalc">Recalcular sin consultar</button><div class="status"><div class="prog"><span id="ioBar"></span></div><p class="msg" id="ioMsg"></p></div></div>
+      </section>
+      <section class="panel" id="ioRes2" hidden>
+        <nav class="isubnav strats" id="ioStrats" aria-label="Estrategias"></nav>
+        <div id="ioPort"></div>
+        <div class="row gap wrap"><div class="chips" id="ioTypes"></div>
+          <label class="field inline"><span class="lbl">Ordenar por</span><select id="ioSort"><option value="score">Puntaje</option><option value="profit">Ganancia neta</option><option value="roi">ROI</option><option value="capital">Menor capital</option><option value="rotation">Venta más rápida</option><option value="liquidity">Liquidez</option><option value="risk">Menor riesgo</option></select></label>
+          <button class="btn ghost" id="ioJson">Exportar JSON</button></div>
+        <div id="ioList" class="recs"></div>
+      </section>
+    </div>
+    <div class="isub" id="isub-demand" hidden>
+      <section class="panel"><div class="ph"><h2>Demanda y rotación</h2><span class="muted small">Compara mercados y estima cuánto vendes en 24 h a 30 días.</span></div><div id="idForm"></div></section>
+      <section class="panel"><div id="idOut"><p class="muted small">Elige un objeto y pulsa «Analizar».</p></div></section>
+    </div>
+    <div class="isub" id="isub-sim" hidden>
+      <section class="panel"><div class="ph"><h2>Simulador de inversión</h2><span class="muted small" id="isFrom"></span></div><div id="isForm"></div></section>
+      <section class="panel"><div id="isOut"></div></section>
+    </div>
+    <div class="isub" id="isub-ops" hidden>
+      <section class="panel"><div class="ph"><h2>Seguimiento de operaciones</h2><span class="muted small">Planificada → activa → cerrada. Se guarda junto al Diario.</span></div><div id="iopLearn"></div><div id="iopList"></div></section>
+    </div>
+    <div class="isub" id="isub-own" hidden>
+      <section class="panel"><div class="ph"><h2>Historial propio y estadísticas</h2><div class="btns"><button class="btn" id="iownExp">Exportar</button><label class="btn">Importar<input id="iownImp" type="file" accept="application/json" hidden></label><button class="btn ghost" id="iownClr">Borrar</button></div></div>
+        <p class="small">La app guarda en este dispositivo cada precio que consulta a AODP (fecha, mercado, orden de venta y de compra). No aprende sola: estos datos sirven para ver la evolución de precios que tú observaste, y tus ventas reales (Operaciones) ajustan las estimaciones de rotación.</p>
+        <div id="iownClrC" hidden class="confirm"><span>¿Borrar todo el historial propio de este dispositivo?</span><button class="btn" id="iownClrYes">Sí, borrar</button></div>
+        <div id="iownStats"></div><div id="iownTop"></div><div id="iownChart"></div></section>
+    </div>
+    <div class="isub" id="isub-risk" hidden>
+      <section class="panel"><div class="ph"><h2>Reglas de riesgo y alertas</h2><span class="muted small">Heurísticas de la app: ajústalas a tu forma de jugar.</span></div><div id="irForm"></div></section>
+    </div>
+    <div class="isub" id="isub-chat" hidden>
+      <section class="panel"><div class="ph"><h2>Asistente</h2><span class="muted small">Responde con los cálculos de la app. No es una IA conversacional.</span></div>
+        <div class="chips sugg" id="icSugg"></div>
+        <div class="chatlog" id="icLog" aria-live="polite"></div>
+        <form class="chatin" id="icForm"><input id="icIn" type="text" placeholder="Ej.: ¿Qué puedo hacer con 2 millones en 48 horas?" autocomplete="off"><button class="btn primary" id="icSend">Preguntar</button></form>
+      </section>
+    </div>
+  </section>
+
   <!-- VENTA LOCAL -->
   <section class="view" id="view-local" hidden>
     <section class="panel">
@@ -236,28 +293,35 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.2"></script>
-<script src="js/storage.js?v=1.2"></script>
-<script src="js/api.js?v=1.2"></script>
-<script src="js/crafting.js?v=1.2"></script>
-<script src="js/returnRate.js?v=1.2"></script>
-<script src="js/market.js?v=1.2"></script>
-<script src="js/profit.js?v=1.2"></script>
-<script src="js/demand.js?v=1.2"></script>
-<script src="js/scanner.js?v=1.2"></script>
-<script src="js/chain.js?v=1.2"></script>
-<script src="js/flipping.js?v=1.2"></script>
-<script src="js/journal.js?v=1.2"></script>
-<script src="js/routes.js?v=1.2"></script>
-<script src="js/history.js?v=1.2"></script>
-<script src="js/finder.js?v=1.2"></script>
-<script src="js/alerts.js?v=1.2"></script>
-<script src="js/export.js?v=1.2"></script>
-<script src="js/ui.js?v=1.2"></script>
-<script src="js/view-calculator.js?v=1.2"></script>
-<script src="js/view-market.js?v=1.2"></script>
-<script src="js/view-routes.js?v=1.2"></script>
-<script src="js/view-extra.js?v=1.2"></script>
-<script src="js/app.js?v=1.2"></script>
+<script src="js/version.js?v=1.3"></script>
+<script src="js/storage.js?v=1.3"></script>
+<script src="js/api.js?v=1.3"></script>
+<script src="js/crafting.js?v=1.3"></script>
+<script src="js/returnRate.js?v=1.3"></script>
+<script src="js/market.js?v=1.3"></script>
+<script src="js/profit.js?v=1.3"></script>
+<script src="js/demand.js?v=1.3"></script>
+<script src="js/risk.js?v=1.3"></script>
+<script src="js/forecast.js?v=1.3"></script>
+<script src="js/invest.js?v=1.3"></script>
+<script src="js/scanner.js?v=1.3"></script>
+<script src="js/chain.js?v=1.3"></script>
+<script src="js/flipping.js?v=1.3"></script>
+<script src="js/journal.js?v=1.3"></script>
+<script src="js/snapshots.js?v=1.3"></script>
+<script src="js/recommend.js?v=1.3"></script>
+<script src="js/assistant.js?v=1.3"></script>
+<script src="js/routes.js?v=1.3"></script>
+<script src="js/history.js?v=1.3"></script>
+<script src="js/finder.js?v=1.3"></script>
+<script src="js/alerts.js?v=1.3"></script>
+<script src="js/export.js?v=1.3"></script>
+<script src="js/ui.js?v=1.3"></script>
+<script src="js/view-calculator.js?v=1.3"></script>
+<script src="js/view-market.js?v=1.3"></script>
+<script src="js/view-routes.js?v=1.3"></script>
+<script src="js/view-extra.js?v=1.3"></script>
+<script src="js/view-intel.js?v=1.3"></script>
+<script src="js/app.js?v=1.3"></script>
 </body>
 </html>

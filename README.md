@@ -184,12 +184,44 @@ Límites: AODP solo registra las ventas de jugadores que usan su cliente, tu par
 - **Reventa**: misma ciudad = orden de compra 1 plata sobre la más alta (paga publicación) y orden de venta 1 plata bajo la más barata (impuesto + publicación). Entre ciudades = compra directa en A y venta en B (inmediata: solo impuesto; orden: impuesto + publicación) menos transporte por unidad. La cantidad sugerida es la menor entre lo que alcanza tu capital y tus días × tu parte de las ventas diarias.
 - **Diario**: el neto de cada venta se calcula con tu impuesto al registrarla. «Mi parte real» = tus unidades vendidas ÷ unidades que AODP registró en ese mercado en esas fechas.
 
+## Market Intelligence (v1.3)
+
+Módulo independiente conectado a los motores existentes (no duplica fórmulas: el costo y la venta salen de `scanner.js` y `flipping.js`).
+
+| Componente pedido | Archivo |
+|---|---|
+| MarketDataService | `js/api.js` (consultas agrupadas, caché, reintentos, control de 429) + `js/market.js` |
+| ItemCatalogService | `js/crafting.js` + `data/` |
+| PriceHistoryService | `js/api.js` (historial AODP) + `js/snapshots.js` (historial propio en IndexedDB del dispositivo) |
+| CraftingEngine / RefiningEngine | `js/profit.js`, `js/scanner.js`, `js/returnRate.js` |
+| MarketAnalysisEngine | `js/risk.js` (calidad de datos: ceros, atípicos, diferencias entre ciudades, volatilidad) + `js/forecast.js` (tendencias) |
+| SalesForecastEngine | `js/forecast.js` |
+| OpportunityScanner + RecommendationEngine | `js/recommend.js` |
+| RiskEngine | `js/risk.js` |
+| InvestmentCalculator | `js/invest.js` |
+| MarketAssistantUI | `js/view-intel.js` + `js/assistant.js` |
+
+**Rotación.** Se separan tres conceptos: *volumen observado* (unidades que registró AODP: datos de la comunidad, no el total real),
+*demanda estimada* (unidades/día del mercado en 30 días: conservador = percentil 25, intermedio = promedio, optimista = percentil 75)
+y *velocidad proyectada* (demanda × tu parte del mercado × factor de precio × factor propio). Con menos de 3 días con registros la estimación es provisional (confianza baja).
+
+**Aprendizaje real.** Las operaciones guardadas llevan la velocidad proyectada. Cuando hay ≥ 3 operaciones medibles (terminadas o con ≥ 3 días), la mediana de *vendido real ÷ proyectado* (acotada a 0,25–2) se aplica a todas las estimaciones. No hay otro aprendizaje automático.
+
+**Riesgo.** Puntos por regla (antigüedad, actividad, historial, volatilidad, exceso de inventario, precio atípico, tendencia a la baja, diferencia entre ciudades, dato sospechoso, competencia por precio, zona roja). ≤ 1 bajo, ≤ 3 moderado, más = alto; sin precio o sin historial = datos insuficientes. Todo se configura en *Riesgo*.
+
+**Recomendaciones.** Puntaje = ganancia esperada en el plazo (escenario intermedio) × riesgo (1 / 0,75 / 0,4) × confianza (1 / 0,85 / 0,6). La cartera de cada estrategia toma las de mayor puntaje sin superar capital − reserva, y cada operación respeta el % máximo por operación.
+
+**Asistente.** Reconoce el tipo de pregunta y responde con los motores de la app. No es un modelo de lenguaje y no envía datos a ningún lado. `SM.assistant.buildContext()` deja preparado el resumen que recibiría un modelo externo vía Worker.
+
+**Pruebas.** `node tests/run-tests.js` (datos simulados, 88 pruebas). Las pruebas con datos reales se hacen en la app publicada.
+
 ## Versiones
 
 La versión aparece arriba a la derecha (toca el número para ver los cambios). Al actualizar, cambia el número en tres lugares: `js/version.js` (`SM.VERSION` y `SM.CHANGELOG`), `data-version` en `<html>` de `index.html`, y los `?v=` de `index.html` (evitan que el navegador use archivos viejos guardados). Si la página y los archivos no coinciden, el número se pone naranja con ⚠: recarga o revisa que subiste todos los archivos.
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.3 | 2026-10-01 | Market Intelligence: oportunidades por plazo, rotación, simulador, riesgo, operaciones, historial propio y asistente. |
 | 1.2 | 2026-10-01 | Venta local: panel «Qué datos faltan» con detalle por material, venta y antigüedad. |
 | 1.1 | 2026-10-01 | Venta local. |
 | 1.0 | 2026-10-01 | Primera versión numerada: todos los módulos, cantidad óptima, refinado local, cadena de producción, reventa, diario y arreglo de apertura de resultados. |

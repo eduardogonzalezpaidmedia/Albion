@@ -71,23 +71,23 @@
     out.forEach(r => { if (!best[r.id] || r.profit > best[r.id].profit) best[r.id] = r; });
     out = Object.values(best).sort((a, b) => b.profit - a.profit);
     // liquidez en el mercado de venta para los primeros
-    const top = out.slice(0, 80), byLoc = {};
+    const top = out.slice(0, f.liquidityTop || 80), byLoc = {};
     top.forEach(r => (byLoc[r.sellLoc] = byLoc[r.sellLoc] || []).push(r.id));
-    const V = {};
+    const V = {}, H = {};
     for (const loc in byLoc) {
       const h = await SM.api.getHistory(byLoc[loc], [loc], [1], 24, { onProgress: (d, tt) => onProgress && onProgress('Liquidez', d, tt) });
-      h.rows.forEach(x => { V[x.item_id + '|' + x.location] = SM.market.dailyVolume(x, 7); });
+      h.rows.forEach(x => { V[x.item_id + '|' + x.location] = SM.market.dailyVolume(x, 7); H[x.item_id + '|' + x.location] = x; });
     }
     const share = (f.sharePct || 30) / 100, days = f.days || 3;
     out.forEach(r => {
-      r.liquidity = V[r.id + '|' + r.sellLoc] ?? null;
+      r.liquidity = V[r.id + '|' + r.sellLoc] ?? null; r.histRow = H[r.id + '|' + r.sellLoc] || null;
       const byCap = f.capital > 0 ? Math.floor(f.capital / r.cost) : Infinity;
       const byVol = r.liquidity === null ? null : Math.floor(r.liquidity * days * share);
       r.qty = byVol === null ? (isFinite(byCap) ? byCap : null) : Math.min(byCap, byVol);
       r.totalProfit = r.qty ? r.qty * r.profit : null;
       r.capitalNeeded = r.qty ? r.qty * r.cost : null;
     });
-    return { rows: out, scanned: f.ids.length, stale: p.stale, errors: p.errors };
+    return { rows: out, scanned: f.ids.length, stale: p.stale, errors: p.errors, idx };
   }
 
   SM.flipping = { sameMarket, crossMarket, scan };

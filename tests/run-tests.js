@@ -3,7 +3,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const mem = {}; const localStorage = { getItem: k => k in mem ? mem[k] : null, setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
 const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout, localStorage };
 ctx.globalThis = ctx; vm.createContext(ctx);
-for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/flipping.js', '../js/journal.js', './fixtures.demo.js'])
+for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/risk.js', '../js/forecast.js', '../js/invest.js', '../js/flipping.js', '../js/journal.js', '../js/snapshots.js', './fixtures.demo.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), ctx, { filename: f });
 const { SM, SM_DEMO: DEMO } = ctx;
 const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/settings.json'), 'utf8'));
@@ -120,5 +120,68 @@ const rs = SM.journal.realShare(SM.journal.all()[0], hist);
 t('parte real del mercado = 4 de 60', rs && Math.abs(rs.share - 4 / 60) < 1e-9);
 const exp = SM.journal.exportJSON(); SM.journal.removeBatch(jb.id);
 t('exportar e importar respaldo', SM.journal.importJSON(exp, 'merge') === 1 && SM.journal.all().length === 1);
+
+console.log('Market Intelligence · inversión (DEMO)');
+const pl = SM.invest.plan({ capital: 1000000, reserve: 200000, maxPctPerOp: 50, unitCost: 10000, salePrice: 13500, mode: 'instant', taxPct: 8, setupPct: 2.5, lot: 1 });
+// disponible 800.000 · 50% = 400.000 → 40 u ; neto 13.500 × 0,92 = 12.420 ; ganancia 40 × 2.420 = 96.800
+t('nunca supera el capital: 40 unidades', pl.qty === 40 && pl.investment === 400000);
+t('ganancia neta = 96.800', Math.abs(pl.profit - 96800) < 1e-6);
+t('precio de equilibrio = 10.000 / 0,92', Math.abs(pl.breakeven - 10000 / 0.92) < 1e-6);
+const pl2 = SM.invest.plan({ capital: 1000000, reserve: 0, maxPctPerOp: 100, unitCost: 10000, salePrice: 13500, mode: 'order', taxPct: 4, setupPct: 2.5, lot: 3, ratePerDay: 5, horizonDays: 2 });
+t('limitado por demanda en múltiplos del lote: 9', pl2.qty === 9 && pl2.limitedBy === 'demanda');
+t('orden de venta descuenta publicación', Math.abs(pl2.netUnit - 13500 * 0.935) < 1e-6);
+const cell = pl.sens[2].cells[1]; // −10% y vendes 50%
+t('sensibilidad: −10% vendiendo 50%', Math.abs(cell.cash - (20 * 12420 * 0.9 - 400000)) < 1e-6 && cell.immobilized === 200000);
+t('capital insuficiente → 0 unidades', SM.invest.plan({ capital: 5000, reserve: 0, unitCost: 10000, salePrice: 20000, mode: 'instant', taxPct: 8, setupPct: 2.5 }).qty === 0);
+
+console.log('Market Intelligence · rotación (DEMO)');
+const mkHist = counts => ({ data: counts.map((c, i) => ({ item_count: c, avg_price: 1000, timestamp: new Date(Date.now() - (counts.length - i) * 86400000).toISOString().slice(0, 10) + 'T12:00:00' })) });
+const fc = SM.forecast.forecast({ histRow: mkHist(Array(30).fill(10)), qty: 50, unitCost: 100, sharePct: 30, mode: 'instant', useLearning: false });
+t('demanda constante 10/día → intermedio 10', fc.ok && Math.abs(fc.demand.mid - 10) < 1e-9);
+t('velocidad proyectada = 10 × 30% = 3/día', Math.abs(fc.rate.mid - 3) < 1e-9);
+t('en 72 h vende 9 de 50 e inmoviliza 4.100', fc.table[2].mid.sold === 9 && fc.table[2].mid.immobilized === 4100);
+t('tiempo estimado para 50 u ≈ 400 h', Math.abs(fc.estimatedSaleHours - 400) < 1e-6);
+t('sin historial → datos insuficientes', SM.forecast.forecast({ histRow: { data: [] }, qty: 5 }).ok === false);
+const z = Array(30).fill(0); z[28] = 6;
+const fcp = SM.forecast.forecast({ histRow: mkHist(z), qty: 5, sharePct: 50, useLearning: false });
+t('1 día con registros → provisional, confianza baja', fcp.ok && fcp.provisional && fcp.confidence === 'baja');
+const sc = SM.forecast.forecast({ histRow: mkHist([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), qty: 100, sharePct: 100, useLearning: false });
+t('escenarios ordenados: conservador ≤ intermedio ≤ optimista', sc.rate.cons <= sc.rate.mid && sc.rate.mid <= sc.rate.opt);
+
+console.log('Market Intelligence · riesgo (DEMO)');
+const R = SM.risk.DEFAULT_RULES;
+const low = SM.risk.evaluate({ hasPrice: true, ageMinutes: 30, dailyVolume: 50, historyDays: 30, cv: 5, inventoryRatio: 0.2 }, R);
+t('datos frescos y mucha actividad → riesgo bajo', low.level === 'bajo' && low.score === 0);
+const high = SM.risk.evaluate({ hasPrice: true, ageMinutes: 30 * 60, dailyVolume: 0.5, historyDays: 4, cv: 40, inventoryRatio: 2, redZone: true }, R);
+t('viejo + poca actividad + volátil + exceso + zona roja → alto', high.level === 'alto');
+t('cada factor explica su puntaje', high.factors.every(f => f.label && f.detail && typeof f.pts === 'number'));
+t('sin precio → datos insuficientes', SM.risk.evaluate({ hasPrice: false }, R).level === 'insuficiente');
+t('sin historial → datos insuficientes', SM.risk.evaluate({ hasPrice: true, historyDays: 0 }, R).level === 'insuficiente');
+t('precio atípico: 3.000 vs mediana 1.000', SM.risk.outlier(3000, [1000, 1000, 1100, 900], 60).atypical === true);
+t('precio cero detectado', SM.risk.checkRow({ sell_price_min: 0, buy_price_max: 0 }).length === 2);
+t('orden de compra > orden de venta = sospechoso', SM.risk.checkRow({ sell_price_min: 100, buy_price_max: 200 }).some(f => f.includes('desfasado')));
+t('volatilidad de precios constantes = 0', SM.risk.volatility([5, 5, 5, 5]) === 0);
+t('diferencia anormal entre ciudades', SM.risk.cityGap({ A: 1000, B: 1000, C: 3000 }, 'C', 150).abnormal === true);
+
+console.log('Market Intelligence · operaciones y aprendizaje (DEMO)');
+const recDemo = { itemId: 'DEMO_ITEM', targetCity: 'Lymhurst', sourceCity: 'Lymhurst', quantity: 10, totalInvestment: 10000, opLabel: 'Fabricación', op: 'craft', operation: 'craft_and_sell', saleMode: 'instant', buyPrice: 1000, targetSellPrice: 1500, estimatedNetProfit: 3800, estimatedRoiPercent: 38, estimatedSaleHours: 48, ratePerDay: 5, risk: 'bajo', confidence: 'alta', strategy: '48h', dataTimestamp: new Date().toISOString() };
+const before = SM.journal.totals().invested;
+const op = SM.journal.planOp(recDemo);
+t('planificada no cuenta como invertida', SM.journal.statusOf(op) === 'planned' && SM.journal.totals().invested === before);
+SM.journal.activate(op.id, { units: 10, totalCost: 9500 });
+t('activada con costo real', SM.journal.statusOf(SM.journal.all().find(b => b.id === op.id)) === 'active' && SM.journal.totals().invested === before + 9500);
+t('sin 3 operaciones medibles no hay ajuste', SM.forecast.learningFactor().factor === 1);
+for (let i = 0; i < 3; i++) { const o = SM.journal.planOp(recDemo); SM.journal.activate(o.id, { units: 10, totalCost: 10000, date: Date.now() - 4 * 86400000 }); SM.journal.addSale(o.id, { units: 10, unitPrice: 1500, mode: 'instant', date: Date.now() }, { taxPct: 8, setupPct: 2.5 }); }
+const lf = SM.forecast.learningFactor();
+t('aprende de ventas reales: 2,5/día vs 5 proyectadas → ×0,5', lf.samples === 3 && Math.abs(lf.factor - 0.5) < 1e-9);
+const fcl = SM.forecast.forecast({ histRow: mkHist(Array(30).fill(10)), qty: 50, unitCost: 100, sharePct: 30, mode: 'instant' });
+t('el ajuste propio se aplica a la rotación (3 → 1,5/día)', Math.abs(fcl.rate.mid - 1.5) < 1e-9);
+
+console.log('Historial propio (DEMO, memoria)');
+const z0 = '0001-01-01T00:00:00';
+const obs = SM.snapshots.toObs([{ item_id: 'X', city: 'Lymhurst', quality: 1, sell_price_min: 100, sell_price_min_date: now, buy_price_max: 0, buy_price_max_date: z0 }, { item_id: 'Y', city: 'Lymhurst', quality: 1, sell_price_min: 0, sell_price_min_date: z0, buy_price_max: 0, buy_price_max_date: z0 }], Date.now());
+t('guarda precios válidos e ignora ceros', obs.length === 1 && obs[0].sMin === 100 && obs[0].bMax === null);
+t('no duplica la misma observación', SM.snapshots.toObs([{ item_id: 'X', city: 'Lymhurst', quality: 1, sell_price_min: 100, sell_price_min_date: now, buy_price_max: 0, buy_price_max_date: z0 }], Date.now()).length === 0);
+
 console.log('\n' + pass + ' pruebas correctas, ' + fail + ' fallidas');
 process.exit(fail ? 1 : 0);
