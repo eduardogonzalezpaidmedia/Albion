@@ -18,6 +18,91 @@
   };
   const trendCell = e => e.demand && e.demand.ok && e.demand.trend ? `<span class="trend t-${e.demand.trend}">${e.demand.trend === 'sube' ? '▲ sube' : e.demand.trend === 'baja' ? '▼ baja' : '■ estable'}</span>` : '<span class="muted">—</span>';
 
+
+  /* ---------- Venta local ---------- */
+  const local = { res: null };
+  local.init = function () {
+    const u = U(), P = SM.storage.profile();
+    const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
+    u.$('#locForm').innerHTML = `<div class="fields">
+      <label class="field" style="grid-column:span 2"><span class="lbl">Dónde</span><select id="lcMode"><option value="city">Todo en una ciudad que elijo</option><option value="bonus">Cada objeto en su ciudad con bono</option></select></label>
+      <label class="field" id="lcCityF"><span class="lbl">Ciudad</span><select id="lcCity">${u.options(cities, P.city)}</select></label>
+      <label class="field" id="lcOnlyF"><span class="lbl">Solo con bono</span><span class="check"><input id="lcOnly" type="checkbox"> Solo lo que esta ciudad fabrica con bono</span></label>
+      <div class="field" style="grid-column:1/-1"><span class="lbl">Qué fabricar</span><div class="chips" id="lcCats"></div></div>
+      <label class="field"><span class="lbl">Tier mínimo</span><select id="lcTMin">${u.options(TIERS, 4)}</select></label>
+      <label class="field"><span class="lbl">Tier máximo</span><select id="lcTMax">${u.options(TIERS, 8)}</select></label>
+      <div class="field"><span class="lbl">Encantamiento</span><div class="chips" id="lcEnch"></div></div>
+      <label class="field"><span class="lbl">Foco</span><span class="check"><input id="lcFocus" type="checkbox"${P.focus ? ' checked' : ''}> Usar foco</span></label>
+      <label class="field"><span class="lbl">Tipo de venta</span><select id="lcSale"><option value="instant">Venta inmediata (orden de compra)</option><option value="order">Publicar orden de venta</option></select></label>
+      <label class="field"><span class="lbl">Cantidad</span><select id="lcQMode"><option value="fixed">Cantidad fija</option><option value="capital">Lo que alcance mi capital</option></select></label>
+      <label class="field"><span class="lbl">Cantidad fija</span><input id="lcUnits" type="number" min="1" value="10"></label>
+      <label class="field"><span class="lbl">Capital</span><input id="lcCap" type="number" min="0" step="100000" value="${P.capital}"></label>
+      <label class="field"><span class="lbl">Profit mínimo (lote)</span><input id="lcProfit" type="number" value="0"></label>
+      <label class="field"><span class="lbl">ROI mínimo (%)</span><input id="lcRoi" type="number" value="5"></label>
+      <label class="field"><span class="lbl">Precios de máximo (horas)</span><input id="lcAge" type="number" min="1" value="${SM.storage.prefs().maxAgeHours || 12}"></label>
+    </div><p class="hint">Compras los materiales en la ciudad, fabricas ahí y vendes ahí mismo: sin transporte ni zona roja. El retorno usa el bono de la ciudad cuando el objeto lo tiene (verificado para las 5 ciudades reales).</p>`;
+    local.cats = u.chips(u.$('#lcCats'), u.catOptions().filter(c => c.value !== 'refined'), ['weapons', 'armor', 'head', 'shoes', 'offhands']);
+    local.ench = u.chips(u.$('#lcEnch'), ENCH, [0, 1, 2, 3]);
+    u.$('#lcMode').onchange = () => { const c = u.$('#lcMode').value === 'city'; u.$('#lcCityF').hidden = !c; u.$('#lcOnlyF').hidden = !c; };
+    u.$('#locGo').onclick = local.run;
+    u.$('#locCsv').onclick = () => local.res && SM.export.csv('silver-master-venta-local.csv', local.res, [
+      { label: 'Objeto', get: e => e.item.name }, { label: 'ID', get: e => e.item.item_id }, { label: 'Ciudad', get: e => e.context.craftCity },
+      { label: 'Bono', get: e => e.rr.bonusKind ? 'sí' : 'no' }, { label: 'Retorno %', get: e => (e.rr.rate * 100).toFixed(2) }, { label: 'Cantidad', get: e => e.calc.made },
+      { label: 'Costo', get: e => Math.round(e.calc.totalCost) }, { label: 'Precio venta', get: e => e.sale.price }, { label: 'Profit', get: e => Math.round(e.calc.profit) },
+      { label: 'ROI %', get: e => e.calc.roi.toFixed(2) }, { label: 'Silver/h', get: e => e.calc.silverPerHour ? Math.round(e.calc.silverPerHour) : '' },
+      { label: 'Liquidez/día', get: e => e.liquidity ?? '' }, { label: 'Cantidad óptima', get: e => e.demand && e.demand.ok ? e.demand.best : '' }]);
+  };
+  local.run = async function () {
+    const u = U(), v = id => u.$('#' + id);
+    const cats = local.cats.values(), ench = local.ench.values();
+    if (!cats.length) { v('locMsg').textContent = 'Elige al menos qué fabricar.'; v('locMsg').className = 'msg err'; return; }
+    const mode = v('lcMode').value, city = v('lcCity').value;
+    let items = SM.data.items.filter(it => cats.includes(it.category) && it.tier >= +v('lcTMin').value && it.tier <= +v('lcTMax').value && ench.includes(it.enchantment));
+    const groups = {};
+    if (mode === 'city') {
+      if (v('lcOnly').checked) items = items.filter(it => SM.crafting.bonusFor(it, city).kind);
+      if (items.length) groups[city] = items;
+    } else items.forEach(it => { const c = SM.crafting.bonusCity(it); if (c) (groups[c] = groups[c] || []).push(it); });
+    if (!Object.keys(groups).length) { v('locMsg').textContent = mode === 'city' && v('lcOnly').checked ? city + ' no tiene bono verificado para lo que elegiste. Prueba otras categorías o quita «Solo con bono».' : 'Ningún objeto coincide con los filtros.'; v('locMsg').className = 'msg err'; return; }
+    const P = SM.storage.profile(), saved = P.capital;
+    if (v('lcQMode').value === 'capital') { P.capital = +v('lcCap').value || 0; SM.storage.saveProfile(P); }
+    v('locGo').disabled = true; SM.app.busy(true);
+    let rows = [], scanned = 0, invalid = 0, stale = false;
+    try {
+      for (const c of Object.keys(groups)) {
+        const r = await SM.scanner.scan({
+          itemIds: groups[c].map(i => i.item_id), tierMin: 2, tierMax: 8, craftCity: c, buyLocations: [c], sellMarkets: [c],
+          saleMode: v('lcSale').value, focus: v('lcFocus').checked, quantityMode: v('lcQMode').value, units: +v('lcUnits').value || 10,
+          minProfit: +v('lcProfit').value || 0, minRoi: v('lcRoi').value === '' ? null : +v('lcRoi').value, maxAgeH: +v('lcAge').value || 12
+        }, progress('#locBar', '#locMsg'));
+        r.rows.forEach(e => e.context = { craftCity: c });
+        rows = rows.concat(r.rows); scanned += r.scanned; invalid += r.invalid; stale = stale || r.stale;
+      }
+      rows.sort((a, b) => b.calc.profit - a.calc.profit);
+      local.res = rows;
+      v('locBar').style.width = '100%';
+      v('locMsg').textContent = `Revisé ${scanned.toLocaleString('es-CL')} objetos en ${Object.keys(groups).join(', ')}: ${rows.length} dejan ganancia comprando, fabricando y vendiendo en la misma ciudad; ${invalid.toLocaleString('es-CL')} con DATOS INSUFICIENTES (sin precios en esa ciudad).`;
+      SM.app.setStale(stale);
+      u.$('#locRes').hidden = false;
+      u.table(u.$('#locTable'), rows, [
+        { key: 'item', label: 'Objeto', get: e => e.item.name, html: e => `${u.esc(e.item.name)} <span class="tag">T${e.item.tier}.${e.item.enchantment}</span>` },
+        { key: 'city', label: 'Ciudad', get: e => e.context.craftCity, html: e => `${u.esc(e.context.craftCity)}${e.rr.bonusKind ? ' <span class="small pos">bono</span>' : ''}` },
+        { key: 'rr', label: 'Retorno', num: true, get: e => e.rr.rate, html: e => u.pct(e.rr.rate * 100) },
+        { key: 'units', label: 'Cant.', num: true, get: e => e.calc.made },
+        { key: 'cost', label: 'Costo / u', num: true, get: e => e.calc.totalCost / e.calc.made, html: e => u.fmt(e.calc.totalCost / e.calc.made) },
+        { key: 'price', label: 'Venta / u', num: true, get: e => e.sale.price, html: e => `<span class="silver">${u.fmt(e.sale.price)}</span>` },
+        { key: 'profit', label: 'Profit', num: true, get: e => e.calc.profit, html: e => `<span class="${u.signCls(e.calc.profit)}">${u.fmt(e.calc.profit)}</span>` },
+        { key: 'roi', label: 'ROI', num: true, get: e => e.calc.roi, html: e => u.pct(e.calc.roi) },
+        { key: 'sph', label: 'Silver/h', num: true, get: e => e.calc.silverPerHour, html: e => u.fmt(e.calc.silverPerHour) },
+        { key: 'liq', label: 'Liquidez /día', num: true, get: e => e.liquidity ?? null, html: e => e.liquidity == null ? '—' : e.liquidity.toLocaleString('es-CL', { maximumFractionDigits: 1 }) },
+        { key: 'opt', label: 'Cant. óptima', num: true, get: e => e.demand && e.demand.ok ? e.demand.best : null, html: demandCell },
+        { key: 'trend', label: 'Precio', get: e => e.demand && e.demand.trend, html: trendCell },
+        { key: 'age', label: 'Antigüedad', get: e => e.oldestMinutes, html: e => u.ageBadgeMin(e.oldestMinutes) }
+      ], { sortKey: 'profit', empty: 'Nada deja ganancia vendiendo en la misma ciudad con estos filtros. Prueba bajar el ROI mínimo, usar foco u otra ciudad.', onRow: e => SM.views.calc.open(e.item, true, { units: e.calc.units, craftCity: e.context.craftCity, sellMarket: e.context.craftCity, buyFrom: e.context.craftCity, saleMode: e.calc.sale.mode, focus: v('lcFocus').checked }) });
+    } catch (e) { v('locMsg').textContent = '⚠ ' + e.message; v('locMsg').className = 'msg err'; }
+    finally { if (v('lcQMode').value === 'capital') { const p2 = SM.storage.profile(); p2.capital = saved; SM.storage.saveProfile(p2); } v('locGo').disabled = false; SM.app.busy(false); }
+  };
+
   /* ---------- Refinado local ---------- */
   const refine = { res: null };
   refine.init = function () {
@@ -282,5 +367,5 @@
   };
 
   SM.views = SM.views || {};
-  Object.assign(SM.views, { refine, flip, journal });
+  Object.assign(SM.views, { local, refine, flip, journal });
 })(typeof window !== 'undefined' ? window : globalThis);

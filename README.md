@@ -13,6 +13,7 @@ Aplicación web para analizar oportunidades de plata (silver) en Albion Online: 
 | **Mercado global** | Precio de compra y venta de un objeto en cada mercado, y dónde está más barato cada material. |
 | **Rutas** | Compra → transporte → fabricación → transporte → venta, y comparación de todas las combinaciones de ciudad de fabricación, mercado y tipo de venta. |
 | **Historial** | Precio actual, mínimo, máximo, promedio, volumen y gráfico de 24 h, 7, 30 y 90 días (según lo que tenga AODP). |
+| **Venta local** | Compra los materiales, fabrica y vende en la misma ciudad (sin transporte). Modo «todo en una ciudad» (con filtro «solo con bono») o «cada objeto en su ciudad con bono». |
 | **Refinado local** | Compra el recurso en bruto, refina y vende en la misma ciudad (sin transporte). Modo «cada recurso en su ciudad con bono» o «todo en una ciudad». |
 | **Reventa** | Flipping sin fabricar: en la misma ciudad (orden de compra → orden de venta) o entre ciudades, con liquidez y cantidad sugerida. |
 | **Diario** | Tus lotes y ventas reales: ganancia realizada, ventas por día, stock, y tu parte real del mercado para usarla en «Cantidad óptima». Exporta/importa respaldo JSON. |
@@ -189,6 +190,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.1 | 2026-10-01 | Venta local. |
 | 1.0 | 2026-10-01 | Primera versión numerada: todos los módulos, cantidad óptima, refinado local, cadena de producción, reventa, diario y arreglo de apertura de resultados. |
 
 ## Fases
