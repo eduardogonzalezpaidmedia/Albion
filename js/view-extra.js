@@ -67,7 +67,8 @@
     const P = SM.storage.profile(), saved = P.capital;
     if (v('lcQMode').value === 'capital') { P.capital = +v('lcCap').value || 0; SM.storage.saveProfile(P); }
     v('locGo').disabled = true; SM.app.busy(true);
-    let rows = [], scanned = 0, invalid = 0, stale = false;
+    let rows = [], scanned = 0, invalid = 0, stale = false, missing = [], calculable = 0;
+    u.$('#locMiss').hidden = true;
     try {
       for (const c of Object.keys(groups)) {
         const r = await SM.scanner.scan({
@@ -76,12 +77,16 @@
           minProfit: +v('lcProfit').value || 0, minRoi: v('lcRoi').value === '' ? null : +v('lcRoi').value, maxAgeH: +v('lcAge').value || 12
         }, progress('#locBar', '#locMsg'));
         r.rows.forEach(e => e.context = { craftCity: c });
+        r.missing.forEach(m => m.city = c);
         rows = rows.concat(r.rows); scanned += r.scanned; invalid += r.invalid; stale = stale || r.stale;
+        missing = missing.concat(r.missing); calculable += r.beforeFilters;
       }
       rows.sort((a, b) => b.calc.profit - a.calc.profit);
       local.res = rows;
+      local.renderMissing(missing, { scanned, calculable, shown: rows.length, maxAgeH: +v('lcAge').value || 12, saleMode: v('lcSale').value, focus: v('lcFocus').checked });
       v('locBar').style.width = '100%';
-      v('locMsg').textContent = `Revisé ${scanned.toLocaleString('es-CL')} objetos en ${Object.keys(groups).join(', ')}: ${rows.length} dejan ganancia comprando, fabricando y vendiendo en la misma ciudad; ${invalid.toLocaleString('es-CL')} con DATOS INSUFICIENTES (sin precios en esa ciudad).`;
+      const N = n => n.toLocaleString('es-CL');
+      v('locMsg').textContent = `Revisé ${N(scanned)} objetos en ${Object.keys(groups).join(', ')}: ${N(calculable)} se pudieron calcular y ${N(rows.length)} cumplen tus filtros de ganancia. ${invalid ? N(invalid) + ' no se pudieron calcular por falta de precios: mira «Qué datos faltan» más abajo.' : ''}`;
       SM.app.setStale(stale);
       u.$('#locRes').hidden = false;
       u.table(u.$('#locTable'), rows, [
@@ -101,6 +106,53 @@
       ], { sortKey: 'profit', empty: 'Nada deja ganancia vendiendo en la misma ciudad con estos filtros. Prueba bajar el ROI mínimo, usar foco u otra ciudad.', onRow: e => SM.views.calc.open(e.item, true, { units: e.calc.units, craftCity: e.context.craftCity, sellMarket: e.context.craftCity, buyFrom: e.context.craftCity, saleMode: e.calc.sale.mode, focus: v('lcFocus').checked }) });
     } catch (e) { v('locMsg').textContent = '⚠ ' + e.message; v('locMsg').className = 'msg err'; }
     finally { if (v('lcQMode').value === 'capital') { const p2 = SM.storage.profile(); p2.capital = saved; SM.storage.saveProfile(p2); } v('locGo').disabled = false; SM.app.busy(false); }
+  };
+
+  /** Panel «Qué datos faltan»: resume qué precios no hay y qué hacer. */
+  const ageTxt = m => m === null || m === undefined ? '' : m < 120 ? Math.round(m) + ' min' : m < 2880 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' días';
+  local.renderMissing = function (missing, s) {
+    const u = U(), N = n => n.toLocaleString('es-CL');
+    const box = u.$('#locMiss');
+    if (!missing.length) { box.hidden = true; return; }
+    box.hidden = false;
+    u.$('#locMissCount').textContent = `${N(missing.length)} de ${N(s.scanned)} objetos sin calcular`;
+    // materiales que más bloquean
+    const mats = {};
+    missing.forEach(x => x.mats.forEach(m => {
+      const k = m.id + '|' + x.city;
+      const a = mats[k] = mats[k] || { name: m.name, city: x.city, count: 0, none: 0, old: 0, ageMin: null };
+      a.count++; a[m.status]++;
+      if (m.ageMin !== null && (a.ageMin === null || m.ageMin < a.ageMin)) a.ageMin = m.ageMin;
+    }));
+    const matList = Object.values(mats).sort((a, b) => b.count - a.count);
+    const multi = new Set(missing.map(x => x.city)).size > 1;
+    const noSale = missing.filter(x => x.sale);
+    const saleNone = noSale.filter(x => x.sale.status === 'none').length, saleOld = noSale.filter(x => x.sale.status === 'old').length;
+    const altOk = noSale.filter(x => x.sale.altMode).length;
+    const onlyOld = missing.filter(x => !x.other.length && x.mats.every(m => m.status === 'old') && (!x.sale || x.sale.status === 'old')).length;
+    const other = missing.filter(x => x.other.length);
+    const modeTxt = s.saleMode === 'order' ? 'órdenes de venta publicadas' : 'órdenes de compra (venta inmediata)';
+    const tips = [];
+    if (matList.length) tips.push(`<div class="miss-card"><b>Materiales sin precio</b> <span class="muted small">(bloquean ${N(missing.filter(x => x.mats.length).length)} objetos)</span>
+      <ul class="miss-list">${matList.slice(0, 12).map(m => `<li><span>${u.esc(m.name)}${multi ? ' <span class="muted small">· ' + u.esc(m.city) + '</span>' : ''}</span><span class="small">${m.none ? '<span class="neg">nadie lo vende</span>' : `<span class="warn">precio de hace ${ageTxt(m.ageMin)}</span>`} · bloquea ${N(m.count)} objetos</span></li>`).join('')}</ul>
+      ${matList.length > 12 ? `<p class="muted small">…y ${N(matList.length - 12)} materiales más.</p>` : ''}</div>`);
+    if (noSale.length) tips.push(`<div class="miss-card"><b>Sin precio de venta</b> <span class="muted small">(${N(noSale.length)} objetos)</span>
+      <p class="small">Buscaste ${modeTxt}. ${saleNone ? N(saleNone) + ' objetos no tienen ninguna en esa ciudad. ' : ''}${saleOld ? N(saleOld) + ' sí tienen, pero más viejas que ' + s.maxAgeH + ' h. ' : ''}</p>
+      ${altOk ? `<p class="small">💡 ${N(altOk)} de ellos sí tienen precio si cambias «Tipo de venta» a <b>${s.saleMode === 'order' ? 'Venta inmediata' : 'Publicar orden de venta'}</b>.</p>` : ''}</div>`);
+    if (onlyOld) tips.push(`<div class="miss-card"><b>Precios viejos</b><p class="small">💡 ${N(onlyOld)} objetos sí tienen todos los precios, pero alguno pasa de ${s.maxAgeH} h. Sube «Precios de máximo (horas)» (por ejemplo a 48) y busca de nuevo. Ojo: un precio viejo puede haber cambiado.</p></div>`);
+    if (other.length) tips.push(`<div class="miss-card"><b>Otros</b><p class="small">${[...new Set(other.flatMap(x => x.other))].map(u.esc).join('<br>')}</p></div>`);
+    tips.push(`<p class="hint">Los precios vienen de Albion Online Data Project: solo existen si algún jugador con el cliente de datos pasó por ese mercado. Las ciudades y tiers poco visitados suelen tener huecos. Puedes escribir el precio a mano en la calculadora.</p>`);
+    u.$('#locMissTips').innerHTML = tips.join('');
+    const desc = x => [
+      ...x.mats.map(m => `${u.esc(m.name)} <span class="small ${m.status === 'none' ? 'neg' : 'warn'}">${m.status === 'none' ? 'sin precio' : 'hace ' + ageTxt(m.ageMin)}</span>`),
+      ...(x.sale ? [`Venta <span class="small ${x.sale.status === 'none' ? 'neg' : 'warn'}">${x.sale.status === 'none' ? 'sin precio' : 'hace ' + ageTxt(x.sale.ageMin)}</span>`] : []),
+      ...x.other.map(u.esc)].join(' · ');
+    u.table(u.$('#locMissTable'), missing, [
+      { key: 'item', label: 'Objeto', get: x => x.item.name, html: x => `${u.esc(x.item.name)} <span class="tag">T${x.item.tier}.${x.item.enchantment}</span>` },
+      { key: 'city', label: 'Ciudad', get: x => x.city },
+      { key: 'n', label: 'Faltan', num: true, get: x => x.mats.length + (x.sale ? 1 : 0) + x.other.length },
+      { key: 'what', label: 'Qué falta', get: x => desc(x).replace(/<[^>]+>/g, ''), html: desc }
+    ], { sortKey: 'n', onRow: x => SM.views.calc.open(x.item, true, { craftCity: x.city, sellMarket: x.city, buyFrom: x.city, saleMode: s.saleMode, focus: s.focus }) });
   };
 
   /* ---------- Refinado local ---------- */

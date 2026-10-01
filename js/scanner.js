@@ -66,6 +66,29 @@
     return { item: it, recipe, rr, buys, sale, calc, oldestMinutes: oldest, focusPerCraft };
   }
 
+  /**
+   * Explica por qué un objeto no se pudo calcular: qué precio falta, dónde,
+   * y si existe pero es más viejo que el límite de horas.
+   * status: 'none' = AODP no tiene precio; 'old' = hay precio pero es antiguo.
+   */
+  function diagnose(e, idx, c) {
+    const M = SM.market, out = { item: e.item, mats: [], sale: null, other: [] };
+    if (!e.recipe || !e.recipe.materials || !e.recipe.materials.length) out.other.push('No hay receta en los datos del juego');
+    if (e.rr.rate === null) out.other.push('Falta el porcentaje de retorno (modo manual en Ajustes)');
+    for (const m of (e.recipe ? e.recipe.materials : [])) {
+      if (e.buys[m.item_id]) continue;
+      const any = M.cheapestBuy(idx, m.item_id, c.buyLocations, null);
+      out.mats.push({ id: m.item_id, name: SM.crafting.label(m.item_id), status: any ? 'old' : 'none', ageMin: any ? M.ageMinutes(any.date) : null, where: c.buyLocations.join(', ') });
+    }
+    if (!e.sale) {
+      const anyAge = M.bestSale(idx, e.item.item_id, c.sellMarkets, c.saleMode, c.quality, null);
+      const other = c.saleMode === 'order' ? 'instant' : 'order';
+      const alt = M.bestSale(idx, e.item.item_id, c.sellMarkets, other, c.quality, c.maxAgeH);
+      out.sale = { status: anyAge ? 'old' : 'none', ageMin: anyAge ? M.ageMinutes(anyAge.date) : null, mode: c.saleMode, altMode: alt ? other : null, altPrice: alt ? alt.price : null, where: c.sellMarkets.join(', ') };
+    }
+    return out;
+  }
+
   /** Escaneo de muchos objetos. f = filtros + contexto. */
   async function scan(f, onProgress) {
     const c = context(f);
@@ -84,11 +107,13 @@
     const p2 = await SM.api.getPrices(items.map(i => i.item_id), c.sellMarkets, [qual], { onProgress: (d, t) => prog('Precios de venta', d, t) });
     const idx = SM.market.index(p1.rows); SM.market.index(p2.rows, idx);
     let rows = [], invalid = 0;
+    const missing = [];
     for (const it of items) {
       const e = evaluate(it, idx, c);
-      if (!e.calc.ok) { invalid++; continue; }
+      if (!e.calc.ok) { invalid++; missing.push(diagnose(e, idx, c)); continue; }
       rows.push(e);
     }
+    const beforeFilters = rows.length;
     // cantidad según capital: se recalcula con la cantidad que alcanza el capital
     if (f.quantityMode === 'capital' && c.profile.capital > 0) {
       rows = rows.map(e => {
@@ -134,7 +159,7 @@
       const r = SM.market.row(idx, e.item.item_id, e.sale.location, qual);
       e.confidence = SM.market.confidence({ ageMinutes: e.oldestMinutes, hasBuy: !!SM.market.buyOrder(r), hasSell: !!SM.market.sellOrder(r), dailyVolume: e.liquidity, historyDays: e.historyDays }, confCfg);
     });
-    return { rows, invalid, scanned: items.length, idx, stale: p1.stale || p2.stale, errors: [...p1.errors, ...p2.errors], context: c };
+    return { rows, invalid, missing, beforeFilters, scanned: items.length, idx, stale: p1.stale || p2.stale, errors: [...p1.errors, ...p2.errors], context: c };
   }
 
   /** Cantidad óptima con los ajustes de demanda de Preferencias. */
@@ -150,5 +175,5 @@
   }
 
   SM.engine = { context, returnFor, evaluate, demandFor };
-  SM.scanner = { scan };
+  SM.scanner = { scan, diagnose };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,8 +1,13 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.1';
+  SM.VERSION = '1.2';
   SM.CHANGELOG = [
+    { v: '1.2', date: '2026-10-01', items: [
+      'Venta local: nuevo panel «Qué datos faltan». Muestra qué materiales no tienen precio y en qué ciudad, qué objetos no tienen precio de venta y cuáles solo tienen precios viejos.',
+      'Sugerencias concretas: cambiar el tipo de venta o subir las horas máximas cuando eso destraba objetos.',
+      'Lista objeto por objeto; al tocarlo se abre en la calculadora para escribir el precio a mano.'
+    ] },
     { v: '1.1', date: '2026-10-01', items: [
       'Nuevo: Venta local. Comprar materiales, fabricar y vender en la misma ciudad, sin transporte.',
       'Modos: todo en una ciudad (con filtro «solo lo que esta ciudad fabrica con bono») o cada objeto en su ciudad con bono.',

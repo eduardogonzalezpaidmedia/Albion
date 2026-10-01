@@ -185,3 +185,12 @@ label.btn{display:inline-flex;align-items:center}
 .ver{font:600 12px var(--mono);letter-spacing:.04em;background:var(--panel);border:1px solid var(--line2);color:var(--silver);border-radius:999px;padding:7px 11px;cursor:pointer}
 .ver:hover{border-color:var(--accent)}
 .ver.mismatch{border-color:var(--warn);color:var(--warn)}
+/* v1.2 — Qué datos faltan */
+.warn{color:var(--warn)}
+.miss-card{border:1px solid var(--line, #2a2f3a);border-radius:10px;padding:10px 12px;margin:0 0 10px}
+.miss-card p{margin:6px 0 0}
+.miss-card .tablewrap{margin-top:8px}
+.miss-det{margin-top:8px}
+.miss-det summary{cursor:pointer;color:var(--gold);padding:6px 0}
+.miss-list{list-style:none;margin:8px 0 0;padding:0}
+.miss-list li{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line)}

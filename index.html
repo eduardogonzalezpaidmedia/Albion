@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.1">
+<html lang="es" data-version="1.2">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.1">
+<link rel="stylesheet" href="css/style.css?v=1.2">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.1</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.2</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -174,6 +174,11 @@
       <p class="muted small">Toca una fila para abrirla en la calculadora con la misma ciudad para comprar, fabricar y vender.</p>
       <div id="locTable"></div>
     </section>
+    <section class="panel" id="locMiss" hidden>
+      <div class="ph"><h2>Qué datos faltan</h2><span class="muted small" id="locMissCount"></span></div>
+      <div id="locMissTips"></div>
+      <details class="miss-det"><summary>Ver objeto por objeto</summary><p class="muted small">Toca un objeto para abrirlo en la calculadora y escribir a mano el precio que falta.</p><div id="locMissTable"></div></details>
+    </section>
   </section>
 
   <!-- REFINADO LOCAL -->
@@ -231,28 +236,28 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.1"></script>
-<script src="js/storage.js?v=1.1"></script>
-<script src="js/api.js?v=1.1"></script>
-<script src="js/crafting.js?v=1.1"></script>
-<script src="js/returnRate.js?v=1.1"></script>
-<script src="js/market.js?v=1.1"></script>
-<script src="js/profit.js?v=1.1"></script>
-<script src="js/demand.js?v=1.1"></script>
-<script src="js/scanner.js?v=1.1"></script>
-<script src="js/chain.js?v=1.1"></script>
-<script src="js/flipping.js?v=1.1"></script>
-<script src="js/journal.js?v=1.1"></script>
-<script src="js/routes.js?v=1.1"></script>
-<script src="js/history.js?v=1.1"></script>
-<script src="js/finder.js?v=1.1"></script>
-<script src="js/alerts.js?v=1.1"></script>
-<script src="js/export.js?v=1.1"></script>
-<script src="js/ui.js?v=1.1"></script>
-<script src="js/view-calculator.js?v=1.1"></script>
-<script src="js/view-market.js?v=1.1"></script>
-<script src="js/view-routes.js?v=1.1"></script>
-<script src="js/view-extra.js?v=1.1"></script>
-<script src="js/app.js?v=1.1"></script>
+<script src="js/version.js?v=1.2"></script>
+<script src="js/storage.js?v=1.2"></script>
+<script src="js/api.js?v=1.2"></script>
+<script src="js/crafting.js?v=1.2"></script>
+<script src="js/returnRate.js?v=1.2"></script>
+<script src="js/market.js?v=1.2"></script>
+<script src="js/profit.js?v=1.2"></script>
+<script src="js/demand.js?v=1.2"></script>
+<script src="js/scanner.js?v=1.2"></script>
+<script src="js/chain.js?v=1.2"></script>
+<script src="js/flipping.js?v=1.2"></script>
+<script src="js/journal.js?v=1.2"></script>
+<script src="js/routes.js?v=1.2"></script>
+<script src="js/history.js?v=1.2"></script>
+<script src="js/finder.js?v=1.2"></script>
+<script src="js/alerts.js?v=1.2"></script>
+<script src="js/export.js?v=1.2"></script>
+<script src="js/ui.js?v=1.2"></script>
+<script src="js/view-calculator.js?v=1.2"></script>
+<script src="js/view-market.js?v=1.2"></script>
+<script src="js/view-routes.js?v=1.2"></script>
+<script src="js/view-extra.js?v=1.2"></script>
+<script src="js/app.js?v=1.2"></script>
 </body>
 </html>

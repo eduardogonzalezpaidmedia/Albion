@@ -190,6 +190,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.2 | 2026-10-01 | Venta local: panel «Qué datos faltan» con detalle por material, venta y antigüedad. |
 | 1.1 | 2026-10-01 | Venta local. |
 | 1.0 | 2026-10-01 | Primera versión numerada: todos los módulos, cantidad óptima, refinado local, cadena de producción, reventa, diario y arreglo de apertura de resultados. |
 
