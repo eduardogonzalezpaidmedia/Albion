@@ -172,7 +172,7 @@
     u.$('#globalQ').onchange = () => global.run();
     u.$('#globalQty').oninput = () => global.item && global.render();
   };
-  global.open = function (it) { global.item = it; global.picker.set(it); SM.app.go('global', true); global.run(); };
+  global.open = function (it) { SM.app.go('global', true); global.item = it; global.picker.set(it); global.run(); };
   global.run = async function (force) {
     const u = U(), it = global.item; if (!it) return;
     u.$('#globalBody').innerHTML = '<section class="panel"><p class="muted">Consultando AODP…</p></section>';

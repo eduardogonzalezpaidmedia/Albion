@@ -17,7 +17,7 @@
     U.$$('#tabs button').forEach(b => { if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (!inited[view]) {
       inited[view] = true;
-      const map = { calc: SM.views.calc, scanner: SM.views.scanner, bm: SM.views.bm, global: SM.views.global, routes: SM.views.routes, history: SM.views.history, finder: SM.views.finder };
+      const map = { calc: SM.views.calc, scanner: SM.views.scanner, bm: SM.views.bm, global: SM.views.global, routes: SM.views.routes, history: SM.views.history, finder: SM.views.finder, refine: SM.views.refine, flip: SM.views.flip, journal: SM.views.journal };
       if (map[view]) map[view].init();
       if (view === 'settings') renderSettings();
     }
@@ -85,6 +85,7 @@
   /* ---------- Ajustes ---------- */
   function renderSettings() {
     const U = u(), P = SM.storage.profile(), F = SM.storage.prefs(), S = SM.data.settings;
+    F.demand = Object.assign({ days: 3, sharePct: 30, confidencePct: 80, salvagePct: 50 }, F.demand || {}); F.minutes = Object.assign({ buy: 10, transport1: 10, craft: 5, transport2: 10, sell: 10 }, F.minutes || {});
     const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
     const src = (arr) => (arr || []).map(s => `<a href="${U.esc(s.url)}" target="_blank" rel="noopener">${U.esc(new URL(s.url).hostname)}</a> (${U.esc(s.date)})`).join(', ');
     const alerts = SM.storage.alerts();
@@ -178,7 +179,7 @@
     U.$$('[data-aon]').forEach(c => c.onchange = () => { const a = SM.storage.alerts(); a[+c.dataset.aon].active = c.checked; SM.storage.saveAlerts(a); });
     U.$('#sReset').onclick = () => { U.$('#sResetAsk').hidden = false; };
     U.$('#sResetNo').onclick = () => { U.$('#sResetAsk').hidden = true; };
-    U.$('#sResetYes').onclick = () => { ['profile', 'prefs', 'favorites', 'manual-prices', 'alerts'].forEach(k => SM.storage.remove(k)); applyApiConfig(); renderSettings(); U.toast('Datos locales borrados'); };
+    U.$('#sResetYes').onclick = () => { ['profile', 'prefs', 'favorites', 'manual-prices', 'alerts', 'journal'].forEach(k => SM.storage.remove(k)); applyApiConfig(); renderSettings(); U.toast('Datos locales borrados'); };
   }
 
   async function probe() {
@@ -196,8 +197,11 @@
     return r;
   }
 
+  const VERSION = '2026.10.01';
   async function boot() {
     const U = u();
+    window.addEventListener('error', ev => { try { U.toast('Error: ' + (ev.message || 'desconocido') + '. Si acabas de actualizar, recarga la página.', 'err'); } catch (e) { } });
+    window.addEventListener('unhandledrejection', ev => { try { U.toast('Error: ' + ((ev.reason && ev.reason.message) || ev.reason) + '.', 'err'); } catch (e) { } });
     try { await SM.crafting.load(); }
     catch (e) { U.$('#loading').textContent = e.message; return; }
     U.$('#loading').remove();
@@ -214,10 +218,10 @@
     U.$('#modal').onclick = e => { if (e.target.id === 'modal') U.closeModal(); };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') U.closeModal(); });
     const start = (location.hash || '').slice(1);
-    go(['home', 'calc', 'scanner', 'bm', 'global', 'routes', 'history', 'finder', 'settings'].includes(start) ? start : 'home');
+    go(['home', 'calc', 'scanner', 'bm', 'global', 'routes', 'history', 'finder', 'settings', 'refine', 'flip', 'journal'].includes(start) ? start : 'home');
     SM.api.probe(SM.crafting.marketLocations());
   }
 
-  SM.app = { go, busy, setStale, showAlerts, renderHome, probe };
+  SM.app = { go, busy, setStale, showAlerts, renderHome, probe, VERSION: '2026.10.01' };
   if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', boot);
 })(typeof window !== 'undefined' ? window : globalThis);

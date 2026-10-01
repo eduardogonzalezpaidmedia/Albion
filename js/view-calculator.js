@@ -52,9 +52,9 @@
   }
 
   function open(it, fetch, preset) {
-    S.item = it; S.idx = {}; S.fetchedAt = null;
+    SM.app.go('calc', true);          // primero: inicializa la vista si nunca se abrió
+    S.item = it; S.idx = {}; S.fetchedAt = null; S.hist = null; S.chainLoaded = false;
     S.picker.set(it);
-    SM.app.go('calc', true);
     renderShell(preset || {});
     renderMats(); update();
     if (fetch !== false) fetchPrices(false);
@@ -62,6 +62,7 @@
 
   function renderShell(pre) {
     const u = U(), it = S.item, P = SM.storage.profile(), F = SM.storage.prefs();
+    F.demand = Object.assign({ days: 3, sharePct: 30, confidencePct: 80, salvagePct: 50 }, F.demand || {}); F.minutes = Object.assign({ buy: 10, transport1: 10, craft: 5, transport2: 10, sell: 10 }, F.minutes || {});
     const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
     const fav = SM.storage.favorites().includes(it.item_id);
     const st = SM.data.stations[it.crafting_station] || it.crafting_station || '—';
@@ -96,7 +97,14 @@
       </div>
     </section>
     <section class="panel"><div class="ph"><h2>Materiales</h2><span class="muted small" id="cPricesAge"></span></div><div id="cMats"></div></section>
-    <section class="panel"><div class="ph"><h2>Resultado</h2><div class="btns"><button class="btn" id="cLog">Detalle del cálculo</button><button class="btn" id="cCsv">CSV</button><button class="btn" id="cJson">JSON</button><button class="btn ghost" id="cHist">Historial</button><button class="btn ghost" id="cRoute">Rutas</button></div></div><div id="cResult"></div></section>
+    <section class="panel"><div class="ph"><h2>Resultado</h2><div class="btns"><button class="btn" id="cLog">Detalle del cálculo</button><button class="btn" id="cCsv">CSV</button><button class="btn" id="cJson">JSON</button><button class="btn ghost" id="cHist">Historial</button><button class="btn ghost" id="cRoute">Rutas</button><button class="btn ghost" id="cJournal">Registrar en el diario</button></div></div><div id="cResult"></div></section>
+    ${SM.chain && SM.chain.craftableMaterials(it.item_id).length ? `<section class="panel"><div class="ph"><h2>Cadena de producción</h2><span class="muted small">¿Comprar el material refinado o refinarlo tú?</span></div>
+      <div class="fields">
+        <label class="field"><span class="lbl">Refinar en</span><select id="chWhere"><option value="bonus">La ciudad con bono de cada recurso</option><option value="same">La misma ciudad donde fabricas</option></select></label>
+        <label class="field"><span class="lbl">Foco al refinar</span><span class="check"><input id="chFocus" type="checkbox"> Usar foco</span></label>
+      </div>
+      <div class="btns"><button class="btn primary" id="chGo">Comparar comprar vs refinar</button></div>
+      <div id="cChain"></div></section>` : ''}
     <section class="panel"><div class="ph"><h2>Cantidad óptima</h2><span class="muted small">¿Cuántas fabricar según lo que se vende y hacia dónde va el precio? Estimación, no garantía.</span></div>
       <div class="fields">
         <label class="field"><span class="lbl">Vender en máximo (días)</span><input id="oDays" type="number" min="1" max="14" value="${F.demand.days}"></label>
@@ -110,6 +118,7 @@
       <div class="row gap"><label class="field inline"><span class="lbl">Tu precio de venta (manual)</span><input id="cManualSale" type="number" min="0" placeholder="Sin datos"></label><p class="hint">Si lo escribes, reemplaza el precio de AODP en el resultado.</p></div>
       <div id="cSales"></div></section>`;
     if (pre.sellMarket) u.$('#cSell').value = pre.sellMarket;
+    if (pre.buyFrom && SM.crafting.buyLocations().includes(pre.buyFrom)) u.$('#cBuy').value = pre.buyFrom;
     const on = (id, ev, fn) => u.$('#' + id).addEventListener(ev, fn);
     ['cUnits', 'cDaily', 'cRrPct', 'cFee', 'cTr', 'cOther', 'cMin', 'cManualSale'].forEach(id => on(id, 'input', () => { renderMatsQty(); update(); }));
     ['cCity', 'cBonus', 'cFocus', 'cBuy', 'cSell', 'cMode'].forEach(id => on(id, 'change', () => { renderMats(); update(); }));
@@ -123,6 +132,8 @@
     on('cHist', 'click', () => SM.views.history.open(it));
     on('cRoute', 'click', () => SM.views.routes.open(it));
     on('oGo', 'click', runOptimal);
+    if (u.$('#chGo')) { on('chGo', 'click', runChain); on('chWhere', 'change', () => S.chainLoaded && renderChain()); on('chFocus', 'change', () => S.chainLoaded && renderChain()); }
+    on('cJournal', 'click', () => { if (!S.last || !S.last.calc.ok) return u.toast('Primero necesitas un resultado completo.', 'err'); SM.views.journal.prefill(S.item, S.last); });
     ['oDays', 'oShare', 'oConf', 'oSalv'].forEach(id => on(id, 'input', () => S.hist && renderOptimal()));
   }
 
@@ -207,6 +218,7 @@
 
   async function runOptimal() {
     const u = U(), e = S.last;
+    if (!SM.demand) { u.$('#cOpt').innerHTML = '<p class="insufficient">Falta el archivo js/demand.js. Súbelo a tu repositorio y recarga.</p>'; return; }
     if (!e || !e.calc.ok) { u.$('#cOpt').innerHTML = '<p class="insufficient">Primero necesitas un resultado completo (precios de materiales y de venta).</p>'; return; }
     let loc = e.sale.location;
     if (loc === 'Manual') { const s = u.$('#cSell').value; loc = s === 'best' ? SM.storage.profile().city : s; }
@@ -256,5 +268,28 @@
   }
 
   SM.views = SM.views || {};
+  async function runChain() {
+    const u = U(), it = S.item;
+    u.$('#chGo').disabled = true; u.$('#cChain').innerHTML = '<p class="muted">Consultando precios de los recursos en bruto…</p>';
+    try {
+      const p = await SM.api.getPrices(SM.chain.subMaterialIds(it.item_id), SM.crafting.buyLocations(), [1]);
+      SM.market.index(p.rows, S.idx); S.chainLoaded = true; renderChain();
+    } catch (e) { u.$('#cChain').innerHTML = '<p class="insufficient">⚠ ' + u.esc(e.message) + '</p>'; }
+    finally { u.$('#chGo').disabled = false; }
+  }
+  function renderChain() {
+    const u = U(); if (!S.last) return;
+    const base = SM.engine.context(Object.assign(params(), { manualPrices: manualMap(), maxAgeH: null }));
+    const r = SM.chain.analyze(S.last, S.idx, base, { refineWhere: u.$('#chWhere').value, focus: u.$('#chFocus').checked });
+    u.$('#cChain').innerHTML = `<div class="tablewrap"><table class="grid-table"><thead><tr><th>Material</th><th class="n">Cantidad</th><th>Refinar en</th><th class="n">Comprarlo c/u</th><th class="n">Refinarlo c/u</th><th class="n">Ahorro total</th><th>Conviene</th></tr></thead>
+      <tbody>${r.rows.map(x => `<tr><td>${u.esc(SM.crafting.label(x.item.item_id))}</td><td class="n">${u.fmt(x.qty)}</td><td>${u.esc(x.city)} · ${u.pct(x.rr.rate * 100)}${x.rr.bonusKind ? ' <span class="small pos">bono</span>' : ''}</td>
+        <td class="n">${u.fmt(x.buyUnit)}</td><td class="n">${x.refineUnit === null ? '<span class="muted">Sin datos</span>' : u.fmt(x.refineUnit)}</td>
+        <td class="n ${u.signCls(x.saving)}">${x.saving === null ? '—' : u.fmt(x.saving)}</td><td>${x.better === 'refinar' ? '<b class="pos">Refinarlo tú</b>' : x.better === 'comprar' ? 'Comprarlo' : '<span class="muted">Datos insuficientes</span>'}</td></tr>`).join('')}</tbody></table></div>
+      <div class="kpis"><div class="kpi"><span class="lbl">Profit comprando el refinado</span><b>${u.fmt(S.last.calc.profit)}</b></div>
+        <div class="kpi ${r.totalSaving > 0 ? 'pos' : ''}"><span class="lbl">Ahorro refinando lo que conviene</span><b>${u.fmt(r.totalSaving)}</b></div>
+        <div class="kpi ${u.signCls(r.chainProfit)}"><span class="lbl">Profit de la cadena completa</span><b>${u.fmt(r.chainProfit)}</b></div></div>
+      <p class="hint">Refinarlo cuesta: recursos en bruto + refinado del tier anterior, con el retorno de refinado de esa ciudad. No incluye la tarifa de la estación de refinado ni el transporte entre ciudades: súmalos si aplican.</p>`;
+  }
+
   SM.views.calc = { init, open, state: S };
 })(typeof window !== 'undefined' ? window : globalThis);

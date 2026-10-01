@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=2026.10.01">
 </head>
 <body>
 <header class="topbar">
@@ -30,9 +30,12 @@
   <button data-view="scanner">Market Scanner</button>
   <button data-view="bm">Black Market</button>
   <button data-view="global">Mercado global</button>
+  <button data-view="refine">Refinado local</button>
+  <button data-view="flip">Reventa</button>
   <button data-view="routes">Rutas</button>
   <button data-view="history">Historial</button>
   <button data-view="finder">Mi silver</button>
+  <button data-view="journal">Diario</button>
   <button data-view="settings">Ajustes</button>
 </nav>
 
@@ -51,7 +54,10 @@
       <button class="tile" data-go="global"><span class="t-k">04</span><b>Mercado global</b><span>Precios de un objeto y sus materiales en todas las ciudades.</span></button>
       <button class="tile" data-go="routes"><span class="t-k">05</span><b>Rutas</b><span>Compra → transporte → fabricación → transporte → venta.</span></button>
       <button class="tile" data-go="history"><span class="t-k">06</span><b>Historial</b><span>Precio mínimo, máximo, promedio y volumen: 24 h a 90 días.</span></button>
-      <button class="tile wide" data-go="finder"><span class="t-k">07</span><b>¿Qué puedo hacer con mi silver?</b><span>Alternativas según tu capital, tiempo y riesgo.</span></button>
+      <button class="tile" data-go="refine"><span class="t-k">07</span><b>Refinado local</b><span>Compra el recurso, refina y vende en la misma ciudad, sin transporte.</span></button>
+      <button class="tile" data-go="flip"><span class="t-k">08</span><b>Reventa</b><span>Compra barato y revende sin fabricar, en la misma ciudad o entre ciudades.</span></button>
+      <button class="tile" data-go="journal"><span class="t-k">09</span><b>Diario de producción</b><span>Tus lotes y ventas reales: ganancia real y tu parte del mercado.</span></button>
+      <button class="tile wide" data-go="finder"><span class="t-k">10</span><b>¿Qué puedo hacer con mi silver?</b><span>Alternativas según tu capital, tiempo y riesgo.</span></button>
     </div>
     <div class="cols">
       <section class="panel">
@@ -153,6 +159,47 @@
     </section>
   </section>
 
+  <!-- REFINADO LOCAL -->
+  <section class="view" id="view-refine" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Refinado local</h2><span class="muted small">Comprar, refinar y vender en la misma ciudad.</span></div>
+      <div id="refForm"></div>
+      <div class="go"><button class="cta" id="refGo">Buscar refinado rentable</button><div class="status"><div class="prog"><span id="refBar"></span></div><p class="msg" id="refMsg"></p></div></div>
+    </section>
+    <section class="panel" id="refRes" hidden>
+      <div class="ph"><h2>Resultados</h2><div class="btns"><button class="btn" id="refCsv">Exportar CSV</button></div></div>
+      <p class="muted small">Toca una fila para abrirla en la calculadora.</p>
+      <div id="refTable"></div>
+    </section>
+  </section>
+
+  <!-- REVENTA -->
+  <section class="view" id="view-flip" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Reventa sin fabricar</h2><span class="muted small">Flipping: comprar barato y revender.</span></div>
+      <div id="flipForm"></div>
+      <div class="go"><button class="cta" id="flipGo">Buscar reventas</button><div class="status"><div class="prog"><span id="flipBar"></span></div><p class="msg" id="flipMsg"></p></div></div>
+    </section>
+    <section class="panel" id="flipRes" hidden>
+      <div class="ph"><h2>Resultados</h2><div class="btns"><button class="btn" id="flipCsv">Exportar CSV</button></div></div>
+      <p class="muted small">Toca una fila para ver ese objeto en todos los mercados.</p>
+      <div id="flipTable"></div>
+    </section>
+  </section>
+
+  <!-- DIARIO -->
+  <section class="view" id="view-journal" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Diario de producción</h2><span class="muted small">Se guarda en este navegador. Exporta para pasarlo a otro dispositivo.</span></div>
+      <div id="jForm"></div>
+    </section>
+    <section class="panel">
+      <div class="ph"><h2>Resumen</h2><div class="btns"><button class="btn" id="jCsv">Exportar CSV</button><button class="btn" id="jJson">Exportar respaldo</button><label class="btn">Importar respaldo<input id="jImport" type="file" accept="application/json,.json" hidden></label></div></div>
+      <div class="kpis" id="jKpis"></div>
+      <div id="jList"></div>
+    </section>
+  </section>
+
   <!-- AJUSTES -->
   <section class="view" id="view-settings" hidden>
     <div id="settingsBody"></div>
@@ -167,23 +214,27 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/storage.js"></script>
-<script src="js/api.js"></script>
-<script src="js/crafting.js"></script>
-<script src="js/returnRate.js"></script>
-<script src="js/market.js"></script>
-<script src="js/profit.js"></script>
-<script src="js/demand.js"></script>
-<script src="js/scanner.js"></script>
-<script src="js/routes.js"></script>
-<script src="js/history.js"></script>
-<script src="js/finder.js"></script>
-<script src="js/alerts.js"></script>
-<script src="js/export.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/view-calculator.js"></script>
-<script src="js/view-market.js"></script>
-<script src="js/view-routes.js"></script>
-<script src="js/app.js"></script>
+<script src="js/storage.js?v=2026.10.01"></script>
+<script src="js/api.js?v=2026.10.01"></script>
+<script src="js/crafting.js?v=2026.10.01"></script>
+<script src="js/returnRate.js?v=2026.10.01"></script>
+<script src="js/market.js?v=2026.10.01"></script>
+<script src="js/profit.js?v=2026.10.01"></script>
+<script src="js/demand.js?v=2026.10.01"></script>
+<script src="js/scanner.js?v=2026.10.01"></script>
+<script src="js/chain.js?v=2026.10.01"></script>
+<script src="js/flipping.js?v=2026.10.01"></script>
+<script src="js/journal.js?v=2026.10.01"></script>
+<script src="js/routes.js?v=2026.10.01"></script>
+<script src="js/history.js?v=2026.10.01"></script>
+<script src="js/finder.js?v=2026.10.01"></script>
+<script src="js/alerts.js?v=2026.10.01"></script>
+<script src="js/export.js?v=2026.10.01"></script>
+<script src="js/ui.js?v=2026.10.01"></script>
+<script src="js/view-calculator.js?v=2026.10.01"></script>
+<script src="js/view-market.js?v=2026.10.01"></script>
+<script src="js/view-routes.js?v=2026.10.01"></script>
+<script src="js/view-extra.js?v=2026.10.01"></script>
+<script src="js/app.js?v=2026.10.01"></script>
 </body>
 </html>

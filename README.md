@@ -13,6 +13,9 @@ Aplicación web para analizar oportunidades de plata (silver) en Albion Online: 
 | **Mercado global** | Precio de compra y venta de un objeto en cada mercado, y dónde está más barato cada material. |
 | **Rutas** | Compra → transporte → fabricación → transporte → venta, y comparación de todas las combinaciones de ciudad de fabricación, mercado y tipo de venta. |
 | **Historial** | Precio actual, mínimo, máximo, promedio, volumen y gráfico de 24 h, 7, 30 y 90 días (según lo que tenga AODP). |
+| **Refinado local** | Compra el recurso en bruto, refina y vende en la misma ciudad (sin transporte). Modo «cada recurso en su ciudad con bono» o «todo en una ciudad». |
+| **Reventa** | Flipping sin fabricar: en la misma ciudad (orden de compra → orden de venta) o entre ciudades, con liquidez y cantidad sugerida. |
+| **Diario** | Tus lotes y ventas reales: ganancia realizada, ventas por día, stock, y tu parte real del mercado para usarla en «Cantidad óptima». Exporta/importa respaldo JSON. |
 | **Mi silver** | *Silver Opportunity Finder*: alternativas según capital, ciudad, tiempo, premium, foco y riesgo. No declara ninguna como "la mejor". |
 | **Ajustes** | Perfil, impuestos, tarifas, tiempos, caché, proxy, validación de mercados, alertas y fuentes. |
 
@@ -53,6 +56,10 @@ silver-master/
 │   ├── history.js          # historial y gráfico SVG
 │   ├── finder.js           # Silver Opportunity Finder (perfiles de riesgo)
 │   ├── demand.js           # cantidad óptima: probabilidad de venta, tendencia de precio, ganancia esperada
+│   ├── chain.js            # cadena de producción: comprar el refinado vs refinarlo tú
+│   ├── flipping.js         # reventa sin fabricar
+│   ├── journal.js          # diario de producción
+│   ├── view-extra.js       # pantallas Refinado local, Reventa y Diario
 │   ├── alerts.js           # reglas de alertas
 │   ├── export.js           # CSV / JSON
 │   ├── ui.js               # componentes de interfaz (tablas ordenables, buscador, detalle del cálculo)
@@ -73,7 +80,7 @@ silver-master/
 │   └── build_bundle.py           # regenera data/game-data.js
 ├── tests/
 │   ├── fixtures.demo.js    # datos DEMO ficticios
-│   └── run-tests.js        # 50 pruebas del motor
+│   └── run-tests.js        # 57 pruebas del motor
 ├── worker/
 │   ├── cloudflare-worker.js  # proxy opcional
 │   └── wrangler.toml
@@ -169,13 +176,21 @@ En la Calculadora (sección **Cantidad óptima**) y como columnas en Scanner y B
 
 Límites: AODP solo registra las ventas de jugadores que usan su cliente, tu parte del mercado es una suposición, y un parche o evento puede cambiar la demanda. Es una estimación, no una garantía.
 
+## Cadena de producción, reventa y diario
+
+- **Cadena de producción** (en la Calculadora): para cada material que también se puede refinar, compara su precio de compra con el costo de refinarlo (recurso en bruto + refinado del tier anterior, con el retorno de refinado de la ciudad con bono o de tu ciudad). Muestra el ahorro y el profit de la cadena completa. No incluye la tarifa de la estación de refinado ni el transporte.
+- **Reventa**: misma ciudad = orden de compra 1 plata sobre la más alta (paga publicación) y orden de venta 1 plata bajo la más barata (impuesto + publicación). Entre ciudades = compra directa en A y venta en B (inmediata: solo impuesto; orden: impuesto + publicación) menos transporte por unidad. La cantidad sugerida es la menor entre lo que alcanza tu capital y tus días × tu parte de las ventas diarias.
+- **Diario**: el neto de cada venta se calcula con tu impuesto al registrarla. «Mi parte real» = tus unidades vendidas ÷ unidades que AODP registró en ese mercado en esas fechas.
+
+**Al actualizar la app:** los archivos se cargan con `?v=FECHA` para que el navegador no use versiones viejas guardadas. Si cambias archivos, cambia esa fecha en `index.html`.
+
 ## Fases
 
 | Fase | Estado |
 |---|---|
 | 1 Interfaz | Completa |
 | 2 Objetos y recetas | Completa (7.363 objetos desde los datos del juego) |
-| 3 Motor de cálculo | Completo, 50 pruebas (incluye cantidad óptima) |
+| 3 Motor de cálculo | Completo, 57 pruebas (incluye cantidad óptima, reventa y diario) |
 | 4 AODP | Completa (directo o proxy, caché, reintentos, validación de mercados) |
 | 5 Historial | Completo |
 | 6 Black Market | Completo |

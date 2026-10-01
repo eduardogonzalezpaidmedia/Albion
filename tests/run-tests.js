@@ -1,8 +1,9 @@
 /* Pruebas del motor con datos DEMO. Ejecutar: node tests/run-tests.js */
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout };
+const mem = {}; const localStorage = { getItem: k => k in mem ? mem[k] : null, setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
+const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout, localStorage };
 ctx.globalThis = ctx; vm.createContext(ctx);
-for (const f of ['../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', './fixtures.demo.js'])
+for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/flipping.js', '../js/journal.js', './fixtures.demo.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), ctx, { filename: f });
 const { SM, SM_DEMO: DEMO } = ctx;
 const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/settings.json'), 'utf8'));
@@ -97,5 +98,27 @@ t('sin historial suficiente → no calcula', SM.demand.analyze({ histRow: mk([0,
 const loss = SM.demand.analyze({ histRow: flat, days: 3, share: 0.3, salePrice: 1000, netUnit: 400, unitCost: 500, salvagePct: 0.5 });
 t('si pierdes plata la óptima es la mínima', loss.best.q === 1 && loss.best.expProfit < 0);
 t('venta inmediata no se penaliza por precio', SM.demand.analyze({ histRow: flat, days: 3, share: 0.3, salePrice: 99999, mode: 'instant', netUnit: 900, unitCost: 500 }).pos.factor === 1);
+console.log('Reventa (DEMO)');
+const tx = { taxPct: 8, setupPct: 2.5, undercut: 1 };
+const fs1 = SM.flipping.sameMarket({ price: 1000 }, { price: 1300 }, tx);
+// compra 1001 × 1,025 = 1026,025 ; venta 1299 × (1 − 0,105) = 1162,605 ; ganancia 136,58
+t('misma ciudad: ganancia por unidad ≈ 136,58', Math.abs(fs1.profit - 136.58) < 0.01);
+t('sin margen entre órdenes → no hay reventa', SM.flipping.sameMarket({ price: 1000 }, { price: 1001 }, tx) === null);
+const cr = SM.flipping.crossMarket({ price: 1000 }, { buy_price_max: 1200, buy_price_max_date: now }, 'instant', Object.assign({ transportPerUnit: 50 }, tx));
+// neto 1200 × 0,92 = 1104 ; costo 1050 ; ganancia 54
+t('entre ciudades con transporte: ganancia 54', Math.abs(cr.profit - 54) < 1e-9);
+
+console.log('Diario (DEMO)');
+const jb = SM.journal.addBatch({ item_id: 'DEMO_ITEM', location: 'Lymhurst', units: 10, totalCost: 10000, date: Date.now() - 2 * 86400000 });
+SM.journal.addSale(jb.id, { units: 4, unitPrice: 2000, mode: 'order', date: Date.now() - 86400000 }, { taxPct: 8, setupPct: 2.5 });
+const js = SM.journal.stats(SM.journal.all()[0]);
+// neto 8000 × 0,895 = 7160 ; costo vendido 4000 ; ganancia 3160
+t('ganancia realizada = 3.160', Math.abs(js.realizedProfit - 3160) < 1e-6);
+t('quedan 6 por vender', js.remaining === 6);
+const hist = { data: [0, 1, 2].map(i => ({ item_count: 20, avg_price: 2000, timestamp: new Date(Date.now() - (2 - i) * 86400000).toISOString().slice(0, 19) })) };
+const rs = SM.journal.realShare(SM.journal.all()[0], hist);
+t('parte real del mercado = 4 de 60', rs && Math.abs(rs.share - 4 / 60) < 1e-9);
+const exp = SM.journal.exportJSON(); SM.journal.removeBatch(jb.id);
+t('exportar e importar respaldo', SM.journal.importJSON(exp, 'merge') === 1 && SM.journal.all().length === 1);
 console.log('\n' + pass + ' pruebas correctas, ' + fail + ' fallidas');
 process.exit(fail ? 1 : 0);

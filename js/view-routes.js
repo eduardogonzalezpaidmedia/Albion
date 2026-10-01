@@ -40,7 +40,7 @@
   };
   routes.base = function () { const u = U(); return { units: Math.max(1, +u.$('#rUnits').value || 1), focus: u.$('#rFocus').checked, fee: { value: +u.$('#rFee').value || 0, mode: 'total' }, manualPrices: SM.storage.manualPrices(), maxAgeH: null }; };
   routes.open = async function (it) {
-    const u = U(); routes.item = it; routes.picker.set(it); SM.app.go('routes', true);
+    const u = U(); SM.app.go('routes', true); routes.item = it; routes.picker.set(it);
     u.$('#routeBody').innerHTML = '<section class="panel"><p class="muted">Consultando precios en todas las ciudades…</p></section>';
     try { const r = await SM.routes.loadPrices(it, 1); routes.idx = r.idx; SM.app.setStale(r.stale); routes.render(); }
     catch (e) { u.$('#routeBody').innerHTML = `<section class="panel"><p class="insufficient">⚠ No se pudo actualizar el mercado: ${u.esc(e.message)}</p></section>`; }
@@ -92,7 +92,7 @@
     u.$('#histLoc').onchange = u.$('#histQ').onchange = () => history.run();
     u.$('#histRange').onclick = e => { const b = e.target.closest('button'); if (!b) return; history.range = b.dataset.r; u.$$('#histRange button').forEach(x => x.setAttribute('aria-pressed', x === b)); history.run(); };
   };
-  history.open = function (it, loc) { const u = U(); history.item = it; history.picker.set(it); if (loc) u.$('#histLoc').value = loc; SM.app.go('history', true); history.run(); };
+  history.open = function (it, loc) { const u = U(); SM.app.go('history', true); history.item = it; history.picker.set(it); if (loc) u.$('#histLoc').value = loc; history.run(); };
   history.run = async function () {
     const u = U(), it = history.item; if (!it) return;
     const loc = u.$('#histLoc').value, q = it.quality_supported ? +u.$('#histQ').value : 1;
