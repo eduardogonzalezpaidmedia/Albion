@@ -26,8 +26,8 @@ a{color:var(--accent)}
 .brand{display:flex;gap:12px;align-items:center}
 .brand h1{font-size:22px;font-weight:700;letter-spacing:.14em;background:linear-gradient(100deg,#F4F6FA 0%,#9AA6B6 45%,#EEF2F6 70%,#B8C2D0 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand p{margin:0;font-size:12px;color:var(--muted);letter-spacing:.04em}
-.top-actions{display:flex;gap:8px;align-items:center}
-.api-pill{display:flex;align-items:center;gap:8px;font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
+.top-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+.api-pill{display:flex;align-items:center;gap:8px;white-space:nowrap;font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 12px;cursor:pointer}
 .api-pill .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
 .api-pill.ok .dot{background:var(--pos);box-shadow:0 0 8px var(--pos)}
 .api-pill.err .dot{background:var(--neg)}
@@ -182,3 +182,6 @@ tr.safe td{background:color-mix(in srgb,var(--pos) 8%,transparent)}
 .kv4 b{color:var(--ink);font-family:var(--mono);font-weight:500;margin-left:4px}
 .jsub{border-top:1px dashed var(--line2);padding-top:10px}
 label.btn{display:inline-flex;align-items:center}
+.ver{font:600 12px var(--mono);letter-spacing:.04em;background:var(--panel);border:1px solid var(--line2);color:var(--silver);border-radius:999px;padding:7px 11px;cursor:pointer}
+.ver:hover{border-color:var(--accent)}
+.ver.mismatch{border-color:var(--warn);color:var(--warn)}

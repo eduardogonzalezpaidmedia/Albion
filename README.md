@@ -46,6 +46,7 @@ silver-master/
 ├── css/style.css
 ├── js/
 │   ├── api.js              # ÚNICA capa de acceso a AODP: getPrices(), getHistory(), caché, reintentos, proxy
+│   ├── version.js          # número de versión y registro de cambios
 │   ├── storage.js          # localStorage: perfil, preferencias, favoritos, precios manuales, alertas
 │   ├── crafting.js         # carga de datos del juego, búsqueda de objetos, bonos de ciudad
 │   ├── returnRate.js       # retorno de recursos y costo de foco (fórmulas en data/settings.json)
@@ -182,7 +183,13 @@ Límites: AODP solo registra las ventas de jugadores que usan su cliente, tu par
 - **Reventa**: misma ciudad = orden de compra 1 plata sobre la más alta (paga publicación) y orden de venta 1 plata bajo la más barata (impuesto + publicación). Entre ciudades = compra directa en A y venta en B (inmediata: solo impuesto; orden: impuesto + publicación) menos transporte por unidad. La cantidad sugerida es la menor entre lo que alcanza tu capital y tus días × tu parte de las ventas diarias.
 - **Diario**: el neto de cada venta se calcula con tu impuesto al registrarla. «Mi parte real» = tus unidades vendidas ÷ unidades que AODP registró en ese mercado en esas fechas.
 
-**Al actualizar la app:** los archivos se cargan con `?v=FECHA` para que el navegador no use versiones viejas guardadas. Si cambias archivos, cambia esa fecha en `index.html`.
+## Versiones
+
+La versión aparece arriba a la derecha (toca el número para ver los cambios). Al actualizar, cambia el número en tres lugares: `js/version.js` (`SM.VERSION` y `SM.CHANGELOG`), `data-version` en `<html>` de `index.html`, y los `?v=` de `index.html` (evitan que el navegador use archivos viejos guardados). Si la página y los archivos no coinciden, el número se pone naranja con ⚠: recarga o revisa que subiste todos los archivos.
+
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | 2026-10-01 | Primera versión numerada: todos los módulos, cantidad óptima, refinado local, cadena de producción, reventa, diario y arreglo de apertura de resultados. |
 
 ## Fases
 

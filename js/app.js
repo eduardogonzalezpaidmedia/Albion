@@ -197,7 +197,6 @@
     return r;
   }
 
-  const VERSION = '2026.10.01';
   async function boot() {
     const U = u();
     window.addEventListener('error', ev => { try { U.toast('Error: ' + (ev.message || 'desconocido') + '. Si acabas de actualizar, recarga la página.', 'err'); } catch (e) { } });
@@ -211,6 +210,10 @@
     U.$('#serverSel').innerHTML = U.options(Object.entries(SM.data.settings.servers).map(([k, v]) => ({ value: k, label: v.label })), P.server);
     U.$('#serverSel').onchange = e => { const p = SM.storage.profile(); p.server = e.target.value; SM.storage.saveProfile(p); applyApiConfig(); SM.api.clearCache(); U.toast('Servidor: ' + SM.data.settings.servers[p.server].label + '. Los precios no se mezclan entre servidores.'); SM.api.probe(SM.crafting.marketLocations()); };
     U.$('#apiPill').onclick = () => { go('settings'); setTimeout(probe, 50); };
+    const htmlV = document.documentElement.dataset.version, jsV = SM.VERSION || '?';
+    const vb = U.$('#verBadge'); vb.textContent = 'v' + jsV;
+    if (htmlV !== jsV) { vb.classList.add('mismatch'); vb.textContent = 'v' + jsV + ' ⚠'; vb.title = 'La página es v' + htmlV + ' pero los archivos son v' + jsV + '. Recarga; si sigue, revisa que subiste todos los archivos.'; }
+    vb.onclick = () => U.modal('Silver Master v' + jsV, (htmlV !== jsV ? '<p class="insufficient">' + U.esc(vb.title) + '</p>' : '') + (SM.CHANGELOG || []).map(c => `<h3>v${U.esc(c.v)} · ${U.esc(c.date)}</h3><ul>${c.items.map(i => '<li>' + U.esc(i) + '</li>').join('')}</ul>`).join(''));
     U.$$('#tabs button').forEach(b => b.onclick = () => go(b.dataset.view));
     document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
     U.$('#refreshMarket').onclick = refreshMarket;
@@ -222,6 +225,6 @@
     SM.api.probe(SM.crafting.marketLocations());
   }
 
-  SM.app = { go, busy, setStale, showAlerts, renderHome, probe, VERSION: '2026.10.01' };
+  SM.app = { go, busy, setStale, showAlerts, renderHome, probe };
   if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', boot);
 })(typeof window !== 'undefined' ? window : globalThis);
