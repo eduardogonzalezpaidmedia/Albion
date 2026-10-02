@@ -1,8 +1,13 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.3';
+  SM.VERSION = '1.4';
   SM.CHANGELOG = [
+    { v: '1.4', date: '2026-10-02', items: [
+      'Nuevo: Calculadora sencilla para el Mercado Negro. Escribes el precio que paga y te dice si es factible fabricar.',
+      'Muestra cuántos materiales comprar, en qué ciudad están más baratos y su precio en línea; puedes anotar tus propios precios.',
+      'Ventas por día de los últimos 7 días en el Mercado Negro y cantidad sugerida a fabricar.'
+    ] },
     { v: '1.3', date: '2026-10-01', items: [
       'Nuevo: Market Intelligence. Panel general, oportunidades por plazo (24 h, 48 h, 72 h y largo plazo) con cartera que no supera tu capital.',
       'Oportunidades de fabricación, refinamiento, Mercado Negro, reventa local y arbitraje entre ciudades, con costos detallados, riesgo, confianza y motivo.',

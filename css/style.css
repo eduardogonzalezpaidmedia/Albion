@@ -237,3 +237,24 @@ pre.json{white-space:pre-wrap;word-break:break-word;font:12px/1.45 var(--mono);b
 .isub h3{margin:16px 0 8px;font:600 15px var(--display)}
 .modal-card>*,#modalBody,.isub,.isub .panel{min-width:0}
 #modalBody{overflow-wrap:anywhere}
+/* v1.4 — Calculadora sencilla */
+.sp-verdict{display:grid;gap:4px;border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.sp-verdict b{font:700 20px var(--display);letter-spacing:.04em}
+.sp-verdict.v-yes{border-color:var(--pos);background:color-mix(in srgb,var(--pos) 12%,transparent)} .sp-verdict.v-yes b{color:var(--pos)}
+.sp-verdict.v-no{border-color:var(--neg);background:color-mix(in srgb,var(--neg) 12%,transparent)} .sp-verdict.v-no b{color:var(--neg)}
+.sp-verdict.v-meh{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)} .sp-verdict.v-meh b{color:var(--warn)}
+.sp-verdict.v-wait b{color:var(--muted)}
+.sp-mats{display:grid;gap:10px}
+.sp-mat{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:6px}
+.sp-mat p{margin:0}
+.sp-mh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.sp-q b{font:600 18px var(--mono);color:var(--gold)}
+.sp-in input{max-width:160px}
+.sp-bars{display:grid;gap:6px;margin-bottom:12px}
+.sp-bar{display:grid;grid-template-columns:64px 1fr auto;gap:8px;align-items:center;font-size:13.5px}
+.sp-d{color:var(--muted);text-transform:capitalize}
+.sp-track{height:12px;background:var(--bg2);border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.sp-track i{display:block;height:100%;background:var(--gold);border-radius:0 3px 3px 0}
+.sp-rec{border:1px solid var(--line2);border-radius:10px;padding:12px;margin-top:12px;display:grid;gap:6px}
+.sp-rec p{margin:0}
+#view-simple .panel{min-width:0}

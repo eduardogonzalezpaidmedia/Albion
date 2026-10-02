@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.3">
+<html lang="es" data-version="1.4">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.3">
+<link rel="stylesheet" href="css/style.css?v=1.4">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.3</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.4</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -28,6 +28,7 @@
 <nav class="tabs" id="tabs" aria-label="Módulos">
   <button data-view="home" aria-current="page">Inicio</button>
   <button data-view="intel">Market Intelligence</button>
+  <button data-view="simple">Calculadora sencilla</button>
   <button data-view="calc">Calculadora</button>
   <button data-view="scanner">Market Scanner</button>
   <button data-view="bm">Black Market</button>
@@ -163,6 +164,22 @@
     </section>
   </section>
 
+  <!-- CALCULADORA SENCILLA -->
+  <section class="view" id="view-simple" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Calculadora sencilla</h2><span class="muted small">¿Conviene fabricar este objeto para el Mercado Negro?</span></div>
+      <div id="spPicker"></div>
+    </section>
+    <div id="spBody" hidden>
+      <section class="panel"><div id="spForm"></div>
+        <div class="btns"><button class="btn primary" id="spLoad">Cargar precios en línea</button><button class="btn ghost" id="spFull">Abrir en la calculadora completa</button></div>
+        <p class="msg small" id="spMsg"></p></section>
+      <section class="panel"><div class="ph"><h2>¿Es factible?</h2></div><div id="spResult"></div></section>
+      <section class="panel"><div class="ph"><h2>Materiales</h2><span class="muted small">Cantidad, dónde comprar y precio. Corrige el precio si en el juego es otro.</span></div><div id="spMats" class="sp-mats"></div></section>
+      <section class="panel"><div class="ph"><h2>Ventas por día (7 días)</h2><span class="muted small">Mercado Negro · para decidir cuántas fabricar</span></div><div id="spSales"></div></section>
+    </div>
+  </section>
+
   <!-- MARKET INTELLIGENCE -->
   <section class="view" id="view-intel" hidden>
     <section class="panel intel-head">
@@ -293,35 +310,36 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.3"></script>
-<script src="js/storage.js?v=1.3"></script>
-<script src="js/api.js?v=1.3"></script>
-<script src="js/crafting.js?v=1.3"></script>
-<script src="js/returnRate.js?v=1.3"></script>
-<script src="js/market.js?v=1.3"></script>
-<script src="js/profit.js?v=1.3"></script>
-<script src="js/demand.js?v=1.3"></script>
-<script src="js/risk.js?v=1.3"></script>
-<script src="js/forecast.js?v=1.3"></script>
-<script src="js/invest.js?v=1.3"></script>
-<script src="js/scanner.js?v=1.3"></script>
-<script src="js/chain.js?v=1.3"></script>
-<script src="js/flipping.js?v=1.3"></script>
-<script src="js/journal.js?v=1.3"></script>
-<script src="js/snapshots.js?v=1.3"></script>
-<script src="js/recommend.js?v=1.3"></script>
-<script src="js/assistant.js?v=1.3"></script>
-<script src="js/routes.js?v=1.3"></script>
-<script src="js/history.js?v=1.3"></script>
-<script src="js/finder.js?v=1.3"></script>
-<script src="js/alerts.js?v=1.3"></script>
-<script src="js/export.js?v=1.3"></script>
-<script src="js/ui.js?v=1.3"></script>
-<script src="js/view-calculator.js?v=1.3"></script>
-<script src="js/view-market.js?v=1.3"></script>
-<script src="js/view-routes.js?v=1.3"></script>
-<script src="js/view-extra.js?v=1.3"></script>
-<script src="js/view-intel.js?v=1.3"></script>
-<script src="js/app.js?v=1.3"></script>
+<script src="js/version.js?v=1.4"></script>
+<script src="js/storage.js?v=1.4"></script>
+<script src="js/api.js?v=1.4"></script>
+<script src="js/crafting.js?v=1.4"></script>
+<script src="js/returnRate.js?v=1.4"></script>
+<script src="js/market.js?v=1.4"></script>
+<script src="js/profit.js?v=1.4"></script>
+<script src="js/demand.js?v=1.4"></script>
+<script src="js/risk.js?v=1.4"></script>
+<script src="js/forecast.js?v=1.4"></script>
+<script src="js/invest.js?v=1.4"></script>
+<script src="js/scanner.js?v=1.4"></script>
+<script src="js/chain.js?v=1.4"></script>
+<script src="js/flipping.js?v=1.4"></script>
+<script src="js/journal.js?v=1.4"></script>
+<script src="js/snapshots.js?v=1.4"></script>
+<script src="js/recommend.js?v=1.4"></script>
+<script src="js/assistant.js?v=1.4"></script>
+<script src="js/routes.js?v=1.4"></script>
+<script src="js/history.js?v=1.4"></script>
+<script src="js/finder.js?v=1.4"></script>
+<script src="js/alerts.js?v=1.4"></script>
+<script src="js/export.js?v=1.4"></script>
+<script src="js/ui.js?v=1.4"></script>
+<script src="js/view-calculator.js?v=1.4"></script>
+<script src="js/view-market.js?v=1.4"></script>
+<script src="js/view-routes.js?v=1.4"></script>
+<script src="js/view-extra.js?v=1.4"></script>
+<script src="js/view-intel.js?v=1.4"></script>
+<script src="js/view-simple.js?v=1.4"></script>
+<script src="js/app.js?v=1.4"></script>
 </body>
 </html>
