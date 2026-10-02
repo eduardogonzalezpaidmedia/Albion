@@ -258,3 +258,9 @@ pre.json{white-space:pre-wrap;word-break:break-word;font:12px/1.45 var(--mono);b
 .sp-rec{border:1px solid var(--line2);border-radius:10px;padding:12px;margin-top:12px;display:grid;gap:6px}
 .sp-rec p{margin:0}
 #view-simple .panel{min-width:0}
+/* v1.5 — ventas por día editables */
+.sp-days{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
+.sp-day{display:grid;grid-template-columns:58px 1fr;gap:4px 8px;align-items:center;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px}
+.sp-day input{min-width:0;width:100%}
+.sp-day .small{grid-column:1/-1}
+#spDays{margin-bottom:12px}

@@ -7,7 +7,7 @@
   const SM = root.SM = root.SM || {};
   const U = () => SM.ui;
   const BM = 'Black Market';
-  const S = { item: null, idx: {}, hist: null, man: {}, loaded: false };
+  const S = { item: null, idx: {}, hist: null, man: {}, days: {}, loaded: false };
 
   function init() {
     const u = U();
@@ -17,7 +17,7 @@
 
   function choose(it) {
     const u = U(), P = SM.storage.profile();
-    S.item = it; S.idx = {}; S.hist = null; S.man = {}; S.loaded = false;
+    S.item = it; S.idx = {}; S.hist = null; S.man = {}; S.days = {}; S.loaded = false;
     const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
     const bc = SM.crafting.bonusCity(it);
     u.$('#spBody').hidden = false;
@@ -34,7 +34,7 @@
     u.$('#spLoad').onclick = load;
     u.$('#spFull').onclick = () => SM.views.calc.open(S.item, true, { units: +u.$('#spUnits').value || 10, craftCity: u.$('#spCity').value, sellMarket: BM, focus: u.$('#spFocus').checked });
     u.$('#spMsg').textContent = '';
-    render(); load();
+    renderDays(); render(); load();
   }
 
   async function load() {
@@ -60,7 +60,7 @@
       const use = u.$('#spUse'); if (use) use.onclick = () => { inp.value = bo.price; render(); };
       u.$('#spMsg').textContent = 'Precios en línea cargados ' + new Date().toLocaleTimeString('es-CL') + (p1.stale || p2.stale ? ' (sin conexión: se usó lo guardado)' : '') + ' · Puedes corregir cualquier precio a mano.';
     } catch (e) { u.$('#spMsg').textContent = '⚠ No pude cargar precios en línea (' + e.message + '). Escríbelos a mano.'; u.$('#spMsg').className = 'msg err'; }
-    finally { btn.disabled = false; SM.app.busy(false); render(); }
+    finally { btn.disabled = false; SM.app.busy(false); renderDays(); render(); }
   }
 
   function evaluate() {
@@ -109,28 +109,45 @@
       </div>
       <p class="hint">Retorno ${u.pct(c.returnRate * 100)} en ${u.esc(ctx.craftCity)}${e.rr.bonusKind ? ' (con bono de ciudad)' : ' (sin bono)'}${ctx.focus ? ' con foco' : ''}. No incluye el riesgo de llevar la carga a Caerleon. La orden del Mercado Negro puede llenarse o bajar antes de que llegues.</p>`;
 
-    /* ---- ventas por día (7 días) y cantidad sugerida ---- */
-    const box = u.$('#spSales');
-    if (!S.loaded) { box.innerHTML = '<p class="muted small">Carga los precios en línea para ver las ventas por día.</p>'; return; }
+    renderSales(c);
+  }
+
+  /* ---- ventas por día (7 días): datos en línea que puedes reemplazar por los tuyos ---- */
+  function dayRows() {
     const days = SM.demand.dailySeries(S.hist, 7);
-    const total = days.reduce((s, d) => s + d.count, 0);
-    if (!total) { box.innerHTML = '<p class="warn">Albion Data no registró ventas de este objeto en el Mercado Negro en los últimos 7 días. No puedo sugerir una cantidad: empieza con pocas unidades.</p>'; return; }
-    const max = Math.max(...days.map(d => d.count)), avg = total / 7, min = Math.min(...days.map(d => d.count));
+    return days.map((d, i) => ({ t: d.t, online: d.count, price: d.price, value: S.days[i] !== undefined ? S.days[i] : d.count, mine: S.days[i] !== undefined }));
+  }
+  function renderDays() {
+    const u = U(), rows = dayRows(), hasOnline = rows.some(r => r.online > 0);
+    u.$('#spDays').innerHTML = `<p class="small">${hasOnline ? 'Vienen con lo que registró Albion Data. Cambia cualquier día por lo que tú viste en el juego.' : (S.loaded ? 'Albion Data no registró ventas de este objeto en el Mercado Negro.' : 'Aún sin datos en línea.') + ' Escribe cuántas unidades se vendieron cada día.'}</p>
+      <div class="sp-days">${rows.map((r, i) => `<label class="sp-day"><span class="sp-d">${new Date(r.t).toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', timeZone: 'UTC' })}</span><input type="number" min="0" inputmode="numeric" data-day="${i}" value="${r.mine || r.online ? r.value : ''}" placeholder="0"><span class="small muted">${S.loaded ? 'en línea: ' + r.online.toLocaleString('es-CL') : ''}</span></label>`).join('')}</div>
+      <div class="btns"><button type="button" class="btn sm ghost" id="spDaysReset">Volver a los datos en línea</button><button type="button" class="btn sm ghost" id="spDaysClear">Borrar todo</button></div>`;
+    u.$$('#spDays [data-day]').forEach(inp => inp.addEventListener('input', () => { const i = +inp.dataset.day; if (inp.value === '') delete S.days[i]; else S.days[i] = Math.max(0, Math.round(+inp.value || 0)); renderSales(evaluate().e.calc); }));
+    u.$('#spDaysReset').onclick = () => { S.days = {}; renderDays(); renderSales(evaluate().e.calc); };
+    u.$('#spDaysClear').onclick = () => { S.days = {}; for (let i = 0; i < 7; i++) S.days[i] = 0; renderDays(); u.$$('#spDays [data-day]').forEach(x => x.value = ''); renderSales(evaluate().e.calc); };
+  }
+  function renderSales(c) {
+    const u = U(), box = u.$('#spSales'), rows = dayRows();
+    const vals = rows.map(r => r.value), total = vals.reduce((a, b) => a + b, 0), mineN = rows.filter(r => r.mine).length;
+    if (!total) { box.innerHTML = '<p class="warn">Sin ventas anotadas todavía. Escribe las unidades vendidas de cada día para calcular la cantidad sugerida.</p>'; return; }
+    const max = Math.max(...vals), avg = total / 7, min = Math.min(...vals);
     const share = Math.min(100, Math.max(1, +u.$('#spShare').value || 30)) / 100;
     const y = c.yieldN || 1, lot = q => Math.max(0, Math.floor(q / y) * y);
     const sug1 = lot(avg * share), sug3 = lot(avg * share * 3), safe = lot(min * share), units = c.made;
-    const rec = c.profit > 0 ? `Fabrica <b>${Math.max(sug1, y)}</b> para venderlas en ~1 día, o hasta <b>${Math.max(sug3, y)}</b> si aceptas esperar unos 3 días.` : 'Como hoy deja pérdida, no conviene fabricar aunque haya ventas.';
-    box.innerHTML = `<div class="sp-bars">${days.map(d => `<div class="sp-bar"><span class="sp-d">${new Date(d.t).toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', timeZone: 'UTC' })}</span><span class="sp-track"><i style="width:${max ? Math.round(d.count / max * 100) : 0}%"></i></span><span class="sp-n"><b>${d.count.toLocaleString('es-CL')}</b>${d.price ? ' <span class="muted small">a ' + u.fmt(d.price) + '</span>' : ''}</span></div>`).join('')}</div>
+    const rec = c.profit > 0 ? `Fabrica <b>${Math.max(sug1, y)}</b> para venderlas en ~1 día, o hasta <b>${Math.max(sug3, y)}</b> si aceptas esperar unos 3 días.`
+      : c.profit === null ? 'Falta el precio del Mercado Negro o de algún material para saber si conviene.' : 'Como hoy deja pérdida, no conviene fabricar aunque haya ventas.';
+    const k = (l, v, s2) => `<div class="kpi"><span class="lbl">${l}</span><b>${v}</b><span class="s">${s2 || ''}</span></div>`;
+    box.innerHTML = `<div class="sp-bars">${rows.map(r => `<div class="sp-bar"><span class="sp-d">${new Date(r.t).toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', timeZone: 'UTC' })}</span><span class="sp-track"><i style="width:${max ? Math.round(r.value / max * 100) : 0}%"></i></span><span class="sp-n"><b>${r.value.toLocaleString('es-CL')}</b>${r.mine ? ' <span class="tag">tuyo</span>' : ''}</span></div>`).join('')}</div>
       <div class="kpis">
         ${k('Promedio por día', avg.toLocaleString('es-CL', { maximumFractionDigits: 1 }), total.toLocaleString('es-CL') + ' en 7 días')}
         ${k('Día más flojo', min.toLocaleString('es-CL'), 'día más fuerte: ' + max.toLocaleString('es-CL'))}
         ${k('Tu parte por día', (avg * share).toLocaleString('es-CL', { maximumFractionDigits: 1 }), Math.round(share * 100) + '% del promedio')}
       </div>
       <div class="sp-rec"><b>Cantidad sugerida</b><p>${rec}</p>
-        <p class="small muted">Cantidad prudente (según el día más flojo): ${Math.max(safe, 0)}. Tú pusiste ${units}${sug3 && units > sug3 ? ': es más de lo que el mercado mostró en 3 días, parte puede quedarse sin vender.' : '.'}</p>
+        <p class="small muted">Cantidad prudente (según el día más flojo): ${safe}. Tú pusiste ${units}${sug3 && units > sug3 ? ': es más de lo que el mercado mostró en 3 días, parte puede quedarse sin vender.' : '.'}</p>
         ${c.profit > 0 ? `<div class="btns"><button class="btn sm" data-q="${Math.max(sug1, y)}">Usar ${Math.max(sug1, y)}</button><button class="btn sm" data-q="${Math.max(sug3, y)}">Usar ${Math.max(sug3, y)}</button></div>` : ''}</div>
-      <p class="hint">Son las ventas que registró Albion Online Data Project (jugadores con el cliente de datos), no todas las del servidor: tómalo como mínimo orientativo, no como garantía.</p>`;
-    u.$$('#spSales [data-q]').forEach(b => b.onclick = () => { u.$('#spUnits').value = b.dataset.q; render(); u.toast('Cantidad cambiada a ' + b.dataset.q); });
+      <p class="hint">${mineN === 7 ? 'Calculado con los datos que tú anotaste.' : mineN ? `Calculado con ${mineN} día(s) tuyos y ${7 - mineN} de Albion Data.` : 'Calculado con lo que registró Albion Online Data Project (no son todas las ventas del servidor).'} Es una orientación, no una garantía.</p>`;
+    u.$$('#spSales [data-q]').forEach(b2 => b2.onclick = () => { u.$('#spUnits').value = b2.dataset.q; render(); u.toast('Cantidad cambiada a ' + b2.dataset.q); });
   }
 
   SM.views = SM.views || {};

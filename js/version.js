@@ -1,8 +1,12 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.4';
+  SM.VERSION = '1.5';
   SM.CHANGELOG = [
+    { v: '1.5', date: '2026-10-02', items: [
+      'Calculadora sencilla: ahora puedes escribir tú las ventas de cada uno de los 7 días. La cantidad sugerida se recalcula al instante.',
+      'Los días vienen con el dato en línea cuando existe; puedes cambiar solo algunos, volver a los datos en línea o borrar todo.'
+    ] },
     { v: '1.4', date: '2026-10-02', items: [
       'Nuevo: Calculadora sencilla para el Mercado Negro. Escribes el precio que paga y te dice si es factible fabricar.',
       'Muestra cuántos materiales comprar, en qué ciudad están más baratos y su precio en línea; puedes anotar tus propios precios.',

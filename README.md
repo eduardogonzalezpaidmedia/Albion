@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.5 | 2026-10-02 | Calculadora sencilla: ventas de cada día editables a mano. |
 | 1.4 | 2026-10-02 | Calculadora sencilla para el Mercado Negro: factible o no, materiales, precios editables, ventas de 7 días y cantidad sugerida. |
 | 1.3 | 2026-10-01 | Market Intelligence: oportunidades por plazo, rotación, simulador, riesgo, operaciones, historial propio y asistente. |
 | 1.2 | 2026-10-01 | Venta local: panel «Qué datos faltan» con detalle por material, venta y antigüedad. |
