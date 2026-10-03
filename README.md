@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.9 | 2026-10-03 | Fabricación: tabla tier × encantamiento para armas, armaduras, botas, etc., con precios de artefactos y materiales refinados. |
 | 1.8 | 2026-10-03 | Pociones en dos pantallas: precios de materiales agrupados y tabla tier × encantamiento. |
 | 1.7 | 2026-10-03 | Pociones: lista por tipo, materiales con precios a mano y rentabilidad. |
 | 1.6 | 2026-10-02 | Artefactos: objetos con artefacto para el Mercado Negro comprando el artefacto por orden de compra; orden por ganancia diaria. |
