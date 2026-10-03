@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="2.0">
+<html lang="es" data-version="2.1">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.0">
+<link rel="stylesheet" href="css/style.css?v=2.1">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.0</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.1</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -175,7 +175,7 @@
   <section class="view" id="view-craft" hidden>
     <section class="panel intel-head">
       <div class="ph"><h2>Fabricación</h2><span class="muted small" id="crSummary"></span></div>
-      <nav class="isubnav" id="crNav" aria-label="Secciones de fabricación"><button type="button" data-sub="table">Objetos</button><button type="button" data-sub="mats">Precios de materiales</button></nav>
+      <nav class="isubnav" id="crNav" aria-label="Secciones de fabricación"><button type="button" data-sub="table">Objetos</button><button type="button" data-sub="mats">Precios de materiales</button><button type="button" data-sub="remains">Restos animales</button></nav>
     </section>
     <div id="crSubTable">
       <section class="panel"><label class="field"><span class="lbl">Categoría</span><select id="crCat"></select></label><div id="crSettings" style="margin-top:12px"></div></section>
@@ -204,7 +204,7 @@
   <section class="view" id="view-potions" hidden>
     <section class="panel intel-head">
       <div class="ph"><h2>Pociones</h2><span class="muted small" id="poSummary"></span></div>
-      <nav class="isubnav" id="poNav" aria-label="Secciones de pociones"><button type="button" data-sub="table">Pociones</button><button type="button" data-sub="mats">Precios de materiales</button></nav>
+      <nav class="isubnav" id="poNav" aria-label="Secciones de pociones"><button type="button" data-sub="table">Pociones</button><button type="button" data-sub="mats">Precios de materiales</button><button type="button" data-sub="remains">Restos animales</button></nav>
     </section>
     <div id="poSubTable">
       <section class="panel"><div class="ph"><h2>Ajustes</h2></div><div id="poSettings"></div></section>
@@ -215,6 +215,17 @@
         <p class="hint">Toca cualquier número para ver los materiales, anotar tu precio de venta y la rentabilidad. En verde o rojo, debajo del costo, la ganancia por poción cuando ya tiene precio de venta.</p>
         <div id="poTable"></div>
       </section>
+    </div>
+    <div id="poSubRemains" hidden>
+      <section class="panel">
+        <div class="ph"><h2>Restos de animales raros</h2><div class="btns"><button class="btn" id="poRemLoad">Rellenar vacíos con precios en línea</button></div></div>
+        <p class="small">¿Con qué ingrediente raro te sale más barato hacer restos? Escribe el precio de cada ingrediente: debajo aparece lo que te cuesta cada resto.</p>
+        <p class="msg small" id="poRemMsg"></p>
+        <div id="poYield"></div>
+        <p class="hint">Los precios son los mismos de «Precios de materiales»: si cambias uno aquí, cambia allá.</p>
+      </section>
+      <section class="panel"><div class="ph"><h2>Precio de cada ingrediente</h2><span class="muted small">Debajo de cada precio: lo que cuesta un resto</span></div><div id="poRemTable"></div></section>
+      <section class="panel"><div class="ph"><h2>Resultado</h2></div><div id="poRemOut"></div></section>
     </div>
     <div id="poSubMats" hidden>
       <section class="panel">
@@ -372,41 +383,41 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=2.0"></script>
-<script src="js/storage.js?v=2.0"></script>
-<script src="js/api.js?v=2.0"></script>
-<script src="js/crafting.js?v=2.0"></script>
-<script src="js/returnRate.js?v=2.0"></script>
-<script src="js/market.js?v=2.0"></script>
-<script src="js/profit.js?v=2.0"></script>
-<script src="js/demand.js?v=2.0"></script>
-<script src="js/risk.js?v=2.0"></script>
-<script src="js/forecast.js?v=2.0"></script>
-<script src="js/invest.js?v=2.0"></script>
-<script src="js/scanner.js?v=2.0"></script>
-<script src="js/chain.js?v=2.0"></script>
-<script src="js/flipping.js?v=2.0"></script>
-<script src="js/journal.js?v=2.0"></script>
-<script src="js/snapshots.js?v=2.0"></script>
-<script src="js/recommend.js?v=2.0"></script>
-<script src="js/assistant.js?v=2.0"></script>
-<script src="js/routes.js?v=2.0"></script>
-<script src="js/history.js?v=2.0"></script>
-<script src="js/finder.js?v=2.0"></script>
-<script src="js/alerts.js?v=2.0"></script>
-<script src="js/export.js?v=2.0"></script>
-<script src="js/ui.js?v=2.0"></script>
-<script src="js/nav.js?v=2.0"></script>
-<script src="js/view-calculator.js?v=2.0"></script>
-<script src="js/view-market.js?v=2.0"></script>
-<script src="js/view-routes.js?v=2.0"></script>
-<script src="js/view-extra.js?v=2.0"></script>
-<script src="js/view-intel.js?v=2.0"></script>
-<script src="js/view-simple.js?v=2.0"></script>
-<script src="js/artifacts.js?v=2.0"></script>
-<script src="js/view-artifacts.js?v=2.0"></script>
-<script src="js/view-potions.js?v=2.0"></script>
-<script src="js/view-craft.js?v=2.0"></script>
-<script src="js/app.js?v=2.0"></script>
+<script src="js/version.js?v=2.1"></script>
+<script src="js/storage.js?v=2.1"></script>
+<script src="js/api.js?v=2.1"></script>
+<script src="js/crafting.js?v=2.1"></script>
+<script src="js/returnRate.js?v=2.1"></script>
+<script src="js/market.js?v=2.1"></script>
+<script src="js/profit.js?v=2.1"></script>
+<script src="js/demand.js?v=2.1"></script>
+<script src="js/risk.js?v=2.1"></script>
+<script src="js/forecast.js?v=2.1"></script>
+<script src="js/invest.js?v=2.1"></script>
+<script src="js/scanner.js?v=2.1"></script>
+<script src="js/chain.js?v=2.1"></script>
+<script src="js/flipping.js?v=2.1"></script>
+<script src="js/journal.js?v=2.1"></script>
+<script src="js/snapshots.js?v=2.1"></script>
+<script src="js/recommend.js?v=2.1"></script>
+<script src="js/assistant.js?v=2.1"></script>
+<script src="js/routes.js?v=2.1"></script>
+<script src="js/history.js?v=2.1"></script>
+<script src="js/finder.js?v=2.1"></script>
+<script src="js/alerts.js?v=2.1"></script>
+<script src="js/export.js?v=2.1"></script>
+<script src="js/ui.js?v=2.1"></script>
+<script src="js/nav.js?v=2.1"></script>
+<script src="js/view-calculator.js?v=2.1"></script>
+<script src="js/view-market.js?v=2.1"></script>
+<script src="js/view-routes.js?v=2.1"></script>
+<script src="js/view-extra.js?v=2.1"></script>
+<script src="js/view-intel.js?v=2.1"></script>
+<script src="js/view-simple.js?v=2.1"></script>
+<script src="js/artifacts.js?v=2.1"></script>
+<script src="js/view-artifacts.js?v=2.1"></script>
+<script src="js/view-potions.js?v=2.1"></script>
+<script src="js/view-craft.js?v=2.1"></script>
+<script src="js/app.js?v=2.1"></script>
 </body>
 </html>

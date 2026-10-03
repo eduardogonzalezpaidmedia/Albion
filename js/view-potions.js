@@ -69,7 +69,9 @@
   function sub(k) {
     const u = U(); S.sub = k;
     u.$$('#poNav button').forEach(b => { if (b.dataset.sub === k) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    u.$('#poSubTable').hidden = k !== 'table'; u.$('#poSubMats').hidden = k !== 'mats';
+    u.$('#poSubTable').hidden = k !== 'table'; u.$('#poSubMats').hidden = k !== 'mats'; u.$('#poSubRemains').hidden = k !== 'remains';
+    if (k === 'remains') buildRemains();
+    if (k === 'mats') u.$$('#poMatGroups [data-mat]').forEach(i => { const v = store().mats[i.dataset.mat]; i.value = v || ''; });
     if (k === 'table') table();
     window.scrollTo({ top: 0 });
   }
@@ -214,6 +216,77 @@
     finally { btn.disabled = false; SM.app.busy(false); }
   }
 
+  /* ---------- restos de animales raros ----------
+     Cada ingrediente raro se puede convertir en «Restos de animales raros». Cuántos restos da cada tier lo indica
+     el usuario (por defecto lo que ella informó: T3 = 5, T5 = 10, T7 = 25) y se puede cambiar. No es un dato de los archivos del juego. */
+  const REMAINS = 'T1_ALCHEMY_COMMON', YKEY = 'remains-yield';
+  const yields = () => Object.assign({ 3: 5, 5: 10, 7: 25 }, SM.storage.get(YKEY, {}));
+  function rareRows() {
+    const g = materials().find(x => x.key === 'rare');
+    return g ? g.sub.map(s2 => ({ key: s2.key, label: s2.items[s2.items.length - 1].name.replace(/\s+(dur[oa]s?|fin[oa]s?|excelentes?|diluida|potente)$/i, ''), byTier: Object.fromEntries(s2.items.map(m => [m.tier, m.id])) })) : [];
+  }
+  function buildRemains() {
+    const u = U(), p = store(), y = yields(), rows = rareRows();
+    const groups = {};
+    rows.forEach(r => { const k = Object.keys(r.byTier).map(Number).sort((a, b) => a - b).join(','); (groups[k] = groups[k] || []).push(r); });
+    u.$('#poYield').innerHTML = `<div class="fields"><label class="field"><span class="lbl">Precio de los restos en el mercado</span><input type="number" min="0" inputmode="numeric" id="poRemPrice" value="${p.mats[REMAINS] || ''}" placeholder="opcional"><span class="hint">Para comparar con comprarlos directo.</span></label></div>`;
+    u.$('#poRemTable').innerHTML = Object.keys(groups).sort().map(k => {
+      const tiers = k.split(',').map(Number), rs = groups[k], known = tiers.some(t => y[t] > 0);
+      return `<div class="rem-group"><h3>${rs.length > 1 ? 'Ingredientes de criaturas' : u.esc(rs[0].label)} <span class="small muted">${tiers.map(t => 'T' + t).join(' · ')}</span></h3>
+        <div class="rem-y">${tiers.map(t => `<label><span>Un T${t} da</span><input type="number" min="0" inputmode="numeric" data-y="${t}" value="${y[t] || ''}" placeholder="?"><span>restos</span></label>`).join('')}</div>
+        ${known ? '' : '<p class="small warn">No tengo el dato de cuántos restos da este ingrediente. Si lo conviertes en el juego, anótalo arriba.</p>'}
+        <div class="tablewrap"><table class="grid-table po-table cr-in po-rem"><thead><tr><th>Ingrediente</th>${tiers.map(t => `<th class="n">T${t}</th>`).join('')}</tr></thead><tbody>
+        ${rs.map(r => `<tr><td class="cr-name">${u.esc(r.label)}</td>${tiers.map(t => `<td data-cell="${u.esc(r.byTier[t])}" data-t="${t}"><input type="number" min="0" inputmode="numeric" data-mat="${u.esc(r.byTier[t])}" value="${p.mats[r.byTier[t]] || ''}" placeholder="precio" aria-label="${u.esc(r.label)} T${t}"><span class="rem-c" data-c></span></td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+    }).join('');
+    u.$$('#poRemTable [data-y]').forEach(inp => inp.addEventListener('input', () => { const q = SM.storage.get(YKEY, {}); q[inp.dataset.y] = +inp.value || 0; SM.storage.set(YKEY, q); remCalc(); }));
+    u.$('#poRemPrice').addEventListener('input', () => { const q = store(), v = +u.$('#poRemPrice').value; if (v > 0) q.mats[REMAINS] = v; else delete q.mats[REMAINS]; save(q); remCalc(); });
+    u.$$('#poRemTable [data-mat]').forEach(inp => inp.addEventListener('input', () => { const q = store(), v = +inp.value; if (v > 0) q.mats[inp.dataset.mat] = v; else delete q.mats[inp.dataset.mat]; save(q); remCalc(); }));
+    u.$('#poRemLoad').onclick = remLoad;
+    remCalc();
+  }
+  /** Costo de cada resto = precio del ingrediente ÷ restos que da. Marca el más barato. */
+  function remCalc() {
+    const u = U(), p = store(), y = yields(), list = [];
+    u.$$('#poRemTable [data-cell]').forEach(td => {
+      const id = td.dataset.cell, t = +td.dataset.t, price = p.mats[id], n = y[t], el = td.querySelector('[data-c]');
+      td.classList.remove('rem-best');
+      if (!(n > 0)) { el.textContent = '× ?'; el.className = 'rem-c warn'; return; }
+      if (!(price > 0)) { el.textContent = '× ' + n; el.className = 'rem-c muted'; return; }
+      const c = price / n; list.push({ id, t, c, td, price, n });
+      el.innerHTML = `<b>${u.fmtQ(c)}</b> c/u`; el.className = 'rem-c';
+    });
+    list.sort((a, b) => a.c - b.c);
+    const out = u.$('#poRemOut'), market = p.mats[REMAINS];
+    if (!list.length) { out.innerHTML = '<p class="muted">Escribe el precio de los ingredientes para ver cuánto te cuesta cada resto.</p>'; return; }
+    const best = list[0]; best.td.classList.add('rem-best');
+    const k = (l, val, s2, cls) => `<div class="kpi ${cls || ''}"><span class="lbl">${l}</span><b>${val}</b><span class="s">${s2 || ''}</span></div>`;
+    let cmp = '';
+    if (market > 0) cmp = best.c < market ? `<div class="sp-verdict v-yes"><b>CONVIENE CONVERTIR</b><span>Con ${u.esc(SM.crafting.label(best.id))} cada resto te sale ${u.fmtQ(best.c)}; comprarlo directo cuesta ${u.fmt(market)}. Ahorras ${u.fmtQ(market - best.c)} por resto (${u.pct((market - best.c) / market * 100)}).</span></div>`
+      : `<div class="sp-verdict v-no"><b>CONVIENE COMPRAR LOS RESTOS</b><span>En el mercado cuestan ${u.fmt(market)} y el ingrediente más barato los deja a ${u.fmtQ(best.c)}.</span></div>`;
+    out.innerHTML = `${cmp}<div class="kpis">
+        ${k('Más barato', u.fmtQ(best.c), `por resto · ${u.esc(SM.crafting.label(best.id))} a ${u.fmt(best.price)} ÷ ${best.n}`, 'pos')}
+        ${list[1] ? k('Segundo', u.fmtQ(list[1].c), u.esc(SM.crafting.label(list[1].id))) : ''}
+        ${k('Más caro', u.fmtQ(list[list.length - 1].c), u.esc(SM.crafting.label(list[list.length - 1].id)))}
+        ${market > 0 ? k('Restos en el mercado', u.fmt(market), 'precio que escribiste') : ''}
+      </div>
+      <h3>De más barato a más caro</h3>
+      <ol class="miss-list rem-rank">${list.map(x => `<li><span>${u.esc(SM.crafting.label(x.id))}</span><span><b>${u.fmtQ(x.c)}</b> <span class="small muted">(${u.fmt(x.price)} ÷ ${x.n})</span>${market > 0 ? (x.c < market ? ' <span class="pos small">conviene</span>' : ' <span class="neg small">más caro</span>') : ''}</span></li>`).join('')}</ol>`;
+  }
+  async function remLoad() {
+    const u = U(), btn = u.$('#poRemLoad'), msg = u.$('#poRemMsg');
+    btn.disabled = true; SM.app.busy(true); msg.textContent = 'Cargando precios en línea…';
+    try {
+      const ids = u.$$('#poRemTable [data-mat]').map(i => i.dataset.mat).concat([REMAINS]);
+      const pr = await SM.api.getPrices(ids, SM.crafting.buyLocations(), [1]); SM.market.index(pr.rows, S.idx);
+      const q = store(); let n = 0;
+      u.$$('#poRemTable [data-mat]').forEach(inp => { if (+inp.value > 0) return; const b = SM.market.cheapestBuy(S.idx, inp.dataset.mat, SM.crafting.buyLocations(), null); if (b) { inp.value = b.price; q.mats[inp.dataset.mat] = b.price; n++; } });
+      const rp = u.$('#poRemPrice'); if (!(+rp.value > 0)) { const b = SM.market.cheapestBuy(S.idx, REMAINS, SM.crafting.buyLocations(), null); if (b) { rp.value = b.price; q.mats[REMAINS] = b.price; n++; } }
+      save(q); remCalc();
+      msg.textContent = n + ' casillas vacías rellenadas con el precio en línea más barato (' + new Date().toLocaleTimeString('es-CL') + ') · No cambia lo que ya habías escrito.';
+    } catch (e) { msg.textContent = '⚠ No pude cargar precios en línea (' + e.message + ').'; }
+    finally { btn.disabled = false; SM.app.busy(false); }
+  }
+
   SM.views = SM.views || {};
-  SM.views.potions = { init, families, materials };
+  SM.views.potions = { init, families, materials, yields };
 })(typeof window !== 'undefined' ? window : globalThis);

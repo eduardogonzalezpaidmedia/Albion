@@ -1,8 +1,12 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '2.0';
+  SM.VERSION = '2.1';
   SM.CHANGELOG = [
+    { v: '2.1', date: '2026-10-03', items: [
+      'Pociones: nueva sección «Restos animales». Anotas el precio de cada ingrediente raro y ves cuánto te cuesta cada resto con cada uno.',
+      'Rendimiento por tier editable (T3 = 5, T5 = 10, T7 = 25). Marca el más barato y lo compara con comprar los restos directo.'
+    ] },
     { v: '2.0', date: '2026-10-03', items: [
       'Menú nuevo: las 17 pantallas se agrupan en 4 secciones (Fabricar, Buscar, Mercado, Mi plata) con una barra fija abajo.',
       'Arriba solo se ven las pantallas de la sección en la que estás. Cada sección recuerda la última pantalla que usaste.',
