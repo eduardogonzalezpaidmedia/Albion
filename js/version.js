@@ -1,8 +1,14 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.5';
+  SM.VERSION = '1.6';
   SM.CHANGELOG = [
+    { v: '1.6', date: '2026-10-02', items: [
+      'Nuevo: Artefactos. Busca objetos con artefacto (T4 y T5 por defecto, calidad normal) para vender al Mercado Negro.',
+      'Para cada artefacto indica en qué ciudad poner la orden de compra, cuánto ofrecer y cuánto ahorras frente a comprarlo directo.',
+      'Ordena por ganancia por día (ganancia por unidad × ventas diarias en el Mercado Negro) y avisa si el artefacto se mueve poco.',
+      'Cada resultado se abre en la Calculadora sencilla con el precio del artefacto ya anotado.'
+    ] },
     { v: '1.5', date: '2026-10-02', items: [
       'Calculadora sencilla: ahora puedes escribir tú las ventas de cada uno de los 7 días. La cantidad sugerida se recalcula al instante.',
       'Los días vienen con el dato en línea cuando existe; puedes cambiar solo algunos, volver a los datos en línea o borrar todo.'

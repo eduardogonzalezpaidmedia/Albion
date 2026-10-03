@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.5">
+<html lang="es" data-version="1.6">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.5">
+<link rel="stylesheet" href="css/style.css?v=1.6">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.5</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.6</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -29,6 +29,7 @@
   <button data-view="home" aria-current="page">Inicio</button>
   <button data-view="intel">Market Intelligence</button>
   <button data-view="simple">Calculadora sencilla</button>
+  <button data-view="artifacts">Artefactos</button>
   <button data-view="calc">Calculadora</button>
   <button data-view="scanner">Market Scanner</button>
   <button data-view="bm">Black Market</button>
@@ -180,6 +181,20 @@
     </div>
   </section>
 
+  <!-- ARTEFACTOS -->
+  <section class="view" id="view-artifacts" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Artefactos para el Mercado Negro</h2><span class="muted small">Compra el artefacto con orden de compra, fabrica y vende al Mercado Negro.</span></div>
+      <div id="arForm"></div>
+      <div class="go"><button class="cta" id="arGo">Buscar objetos con artefacto</button><div class="status"><div class="prog"><span id="arBar"></span></div><p class="msg" id="arMsg"></p></div></div>
+    </section>
+    <section class="panel" id="arRes" hidden>
+      <div class="ph"><h2>Resultados</h2><label class="field inline"><span class="lbl">Ordenar por</span><select id="arSort"><option value="daily">Ganancia por día (ganancia × ventas)</option><option value="profit">Ganancia por unidad</option><option value="volume">Más vendidos en el Mercado Negro</option><option value="roi">ROI</option><option value="art">Artefacto más barato</option></select></label></div>
+      <p class="hint">Ganancia por día = ganancia por unidad × unidades que registró Albion Data al día en el Mercado Negro (7 días) × tu parte. Una orden de compra no se llena al instante y otro comprador puede superarla. Estimación, no garantía.</p>
+      <div id="arList" class="recs"></div>
+    </section>
+  </section>
+
   <!-- MARKET INTELLIGENCE -->
   <section class="view" id="view-intel" hidden>
     <section class="panel intel-head">
@@ -310,36 +325,38 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.5"></script>
-<script src="js/storage.js?v=1.5"></script>
-<script src="js/api.js?v=1.5"></script>
-<script src="js/crafting.js?v=1.5"></script>
-<script src="js/returnRate.js?v=1.5"></script>
-<script src="js/market.js?v=1.5"></script>
-<script src="js/profit.js?v=1.5"></script>
-<script src="js/demand.js?v=1.5"></script>
-<script src="js/risk.js?v=1.5"></script>
-<script src="js/forecast.js?v=1.5"></script>
-<script src="js/invest.js?v=1.5"></script>
-<script src="js/scanner.js?v=1.5"></script>
-<script src="js/chain.js?v=1.5"></script>
-<script src="js/flipping.js?v=1.5"></script>
-<script src="js/journal.js?v=1.5"></script>
-<script src="js/snapshots.js?v=1.5"></script>
-<script src="js/recommend.js?v=1.5"></script>
-<script src="js/assistant.js?v=1.5"></script>
-<script src="js/routes.js?v=1.5"></script>
-<script src="js/history.js?v=1.5"></script>
-<script src="js/finder.js?v=1.5"></script>
-<script src="js/alerts.js?v=1.5"></script>
-<script src="js/export.js?v=1.5"></script>
-<script src="js/ui.js?v=1.5"></script>
-<script src="js/view-calculator.js?v=1.5"></script>
-<script src="js/view-market.js?v=1.5"></script>
-<script src="js/view-routes.js?v=1.5"></script>
-<script src="js/view-extra.js?v=1.5"></script>
-<script src="js/view-intel.js?v=1.5"></script>
-<script src="js/view-simple.js?v=1.5"></script>
-<script src="js/app.js?v=1.5"></script>
+<script src="js/version.js?v=1.6"></script>
+<script src="js/storage.js?v=1.6"></script>
+<script src="js/api.js?v=1.6"></script>
+<script src="js/crafting.js?v=1.6"></script>
+<script src="js/returnRate.js?v=1.6"></script>
+<script src="js/market.js?v=1.6"></script>
+<script src="js/profit.js?v=1.6"></script>
+<script src="js/demand.js?v=1.6"></script>
+<script src="js/risk.js?v=1.6"></script>
+<script src="js/forecast.js?v=1.6"></script>
+<script src="js/invest.js?v=1.6"></script>
+<script src="js/scanner.js?v=1.6"></script>
+<script src="js/chain.js?v=1.6"></script>
+<script src="js/flipping.js?v=1.6"></script>
+<script src="js/journal.js?v=1.6"></script>
+<script src="js/snapshots.js?v=1.6"></script>
+<script src="js/recommend.js?v=1.6"></script>
+<script src="js/assistant.js?v=1.6"></script>
+<script src="js/routes.js?v=1.6"></script>
+<script src="js/history.js?v=1.6"></script>
+<script src="js/finder.js?v=1.6"></script>
+<script src="js/alerts.js?v=1.6"></script>
+<script src="js/export.js?v=1.6"></script>
+<script src="js/ui.js?v=1.6"></script>
+<script src="js/view-calculator.js?v=1.6"></script>
+<script src="js/view-market.js?v=1.6"></script>
+<script src="js/view-routes.js?v=1.6"></script>
+<script src="js/view-extra.js?v=1.6"></script>
+<script src="js/view-intel.js?v=1.6"></script>
+<script src="js/view-simple.js?v=1.6"></script>
+<script src="js/artifacts.js?v=1.6"></script>
+<script src="js/view-artifacts.js?v=1.6"></script>
+<script src="js/app.js?v=1.6"></script>
 </body>
 </html>

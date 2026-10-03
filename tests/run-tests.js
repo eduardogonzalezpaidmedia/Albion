@@ -3,7 +3,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const mem = {}; const localStorage = { getItem: k => k in mem ? mem[k] : null, setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
 const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout, localStorage };
 ctx.globalThis = ctx; vm.createContext(ctx);
-for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/risk.js', '../js/forecast.js', '../js/invest.js', '../js/flipping.js', '../js/journal.js', '../js/snapshots.js', './fixtures.demo.js'])
+for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/risk.js', '../js/forecast.js', '../js/invest.js', '../js/flipping.js', '../js/journal.js', '../js/snapshots.js', '../js/artifacts.js', './fixtures.demo.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), ctx, { filename: f });
 const { SM, SM_DEMO: DEMO } = ctx;
 const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/settings.json'), 'utf8'));
@@ -182,6 +182,19 @@ const z0 = '0001-01-01T00:00:00';
 const obs = SM.snapshots.toObs([{ item_id: 'X', city: 'Lymhurst', quality: 1, sell_price_min: 100, sell_price_min_date: now, buy_price_max: 0, buy_price_max_date: z0 }, { item_id: 'Y', city: 'Lymhurst', quality: 1, sell_price_min: 0, sell_price_min_date: z0, buy_price_max: 0, buy_price_max_date: z0 }], Date.now());
 t('guarda precios válidos e ignora ceros', obs.length === 1 && obs[0].sMin === 100 && obs[0].bMax === null);
 t('no duplica la misma observación', SM.snapshots.toObs([{ item_id: 'X', city: 'Lymhurst', quality: 1, sell_price_min: 100, sell_price_min_date: now, buy_price_max: 0, buy_price_max_date: z0 }], Date.now()).length === 0);
+
+
+console.log('Artefactos · orden de compra (DEMO)');
+const aidx = SM.market.index([
+  { item_id: 'ART', city: 'A', quality: 1, sell_price_min: 1000, sell_price_min_date: now, buy_price_max: 800, buy_price_max_date: now },
+  { item_id: 'ART', city: 'B', quality: 1, sell_price_min: 950, sell_price_min_date: now, buy_price_max: 600, buy_price_max_date: now }]);
+const bp = SM.artifacts.buyPlan(aidx, 'ART', ['A', 'B'], 24, 2.5, 1);
+t('orden en la ciudad con la orden más baja (B: 600 → ofrece 601)', bp.useOrder && bp.order.city === 'B' && bp.order.bid === 601);
+t('costo con publicación 601 × 1,025', Math.abs(bp.price - 601 * 1.025) < 1e-9);
+t('ahorro frente a compra directa más barata (950)', Math.abs(bp.saving - (950 - 601 * 1.025)) < 1e-9);
+const aidx2 = SM.market.index([{ item_id: 'ART2', city: 'A', quality: 1, sell_price_min: 500, sell_price_min_date: now, buy_price_max: 499, buy_price_max_date: now }]);
+t('si la orden sale más cara que comprar directo, compra directo', SM.artifacts.buyPlan(aidx2, 'ART2', ['A'], 24, 2.5, 1).useOrder === false);
+t('sin precios → sin plan', SM.artifacts.buyPlan({}, 'X', ['A'], 24, 2.5, 1).price === null);
 
 console.log('\n' + pass + ' pruebas correctas, ' + fail + ' fallidas');
 process.exit(fail ? 1 : 0);

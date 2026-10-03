@@ -13,19 +13,20 @@
     const u = U();
     S.picker = u.itemPicker(u.$('#spPicker'), it => choose(it), { placeholder: 'Buscar objeto: «bolsa 5.1», «capucha de mercenario 6»…' });
   }
-  function open(it) { SM.app.go('simple', true); S.picker.set(it); choose(it); }
+  function open(it, pre) { SM.app.go('simple', true); S.picker.set(it); choose(it, pre); }
 
-  function choose(it) {
+  function choose(it, pre) {
+    pre = pre || {};
     const u = U(), P = SM.storage.profile();
-    S.item = it; S.idx = {}; S.hist = null; S.man = {}; S.days = {}; S.loaded = false;
+    S.item = it; S.idx = {}; S.hist = null; S.man = Object.assign({}, pre.man || {}); S.days = {}; S.loaded = false;
     const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
     const bc = SM.crafting.bonusCity(it);
     u.$('#spBody').hidden = false;
     u.$('#spForm').innerHTML = `<div class="fields">
       <label class="field"><span class="lbl">Precio del Mercado Negro (por unidad)</span><input id="spPrice" type="number" min="0" inputmode="numeric" placeholder="Escríbelo o toca «Cargar precios»"><span class="hint" id="spPriceHint">Lo que paga la orden de compra del Mercado Negro.</span></label>
       <label class="field"><span class="lbl">Cantidad a fabricar</span><input id="spUnits" type="number" min="1" inputmode="numeric" value="10"></label>
-      <label class="field"><span class="lbl">Fabricas en</span><select id="spCity">${u.options(cities, bc || P.city)}</select><span class="hint">${bc ? 'Ciudad con bono para este objeto: ' + u.esc(bc) : 'Sin ciudad con bono verificada'}</span></label>
-      <label class="field"><span class="lbl">Foco</span><span class="check"><input id="spFocus" type="checkbox"${P.focus ? ' checked' : ''}> Usar foco</span></label>
+      <label class="field"><span class="lbl">Fabricas en</span><select id="spCity">${u.options(cities, pre.city || bc || P.city)}</select><span class="hint">${bc ? 'Ciudad con bono para este objeto: ' + u.esc(bc) : 'Sin ciudad con bono verificada'}</span></label>
+      <label class="field"><span class="lbl">Foco</span><span class="check"><input id="spFocus" type="checkbox"${(pre.focus ?? P.focus) ? ' checked' : ''}> Usar foco</span></label>
       <label class="field"><span class="lbl">Tarifa de fabricación (total)</span><input id="spFee" type="number" min="0" inputmode="numeric" value="0"><span class="hint">Cópiala de la ventana de fabricación del juego.</span></label>
       <label class="field"><span class="lbl">Tu parte de las ventas (%)</span><input id="spShare" type="number" min="1" max="100" value="${(SM.storage.prefs().demand || {}).sharePct || 30}"><span class="hint">Cuánto de lo que se vende al día te llevas tú.</span></label>
     </div>`;
