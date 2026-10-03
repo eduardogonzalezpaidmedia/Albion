@@ -22,9 +22,10 @@
       if (view === 'settings') renderSettings();
     }
     if (view === 'home') renderHome();
+    if (SM.nav) SM.nav.onGo(view);
     try { if (location.hash !== '#' + view) history.replaceState(null, '', '#' + view); } catch (e) { }
     if (!noScroll) window.scrollTo({ top: 0 });
-    const btn = U.$('#tabs button[data-view="' + view + '"]'); if (btn) btn.scrollIntoView({ block: 'nearest', inline: 'center' });
+    const btn = U.$('#tabs button[data-view="' + view + '"]'); if (btn && !btn.hidden) btn.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
 
   function busy(on) {
@@ -220,6 +221,7 @@
     U.$('#modalClose').onclick = U.closeModal;
     U.$('#modal').onclick = e => { if (e.target.id === 'modal') U.closeModal(); };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') U.closeModal(); });
+    if (SM.nav) SM.nav.init();
     const start = (location.hash || '').slice(1);
     go(['home', 'calc', 'scanner', 'bm', 'global', 'routes', 'history', 'finder', 'settings', 'refine', 'flip', 'journal', 'local', 'intel', 'simple', 'artifacts', 'potions', 'craft'].includes(start) ? start : 'home');
     SM.api.probe(SM.crafting.marketLocations());

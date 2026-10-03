@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.9">
+<html lang="es" data-version="2.0">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.9">
+<link rel="stylesheet" href="css/style.css?v=2.0">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.9</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.0</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -54,19 +54,7 @@
 
   <!-- INICIO -->
   <section class="view" id="view-home" hidden>
-    <div class="tiles">
-      <button class="tile" data-go="calc"><span class="t-k">01</span><b>Calculadora</b><span>Costo, profit y ROI de un objeto, con tus precios o los de AODP.</span></button>
-      <button class="tile" data-go="scanner"><span class="t-k">02</span><b>Market Scanner</b><span>Escanea muchos objetos y ordena por profit, ROI, silver/h o liquidez.</span></button>
-      <button class="tile" data-go="bm"><span class="t-k">03</span><b>Black Market</b><span>Fabricar y vender al Mercado Negro de Caerleon.</span></button>
-      <button class="tile" data-go="global"><span class="t-k">04</span><b>Mercado global</b><span>Precios de un objeto y sus materiales en todas las ciudades.</span></button>
-      <button class="tile" data-go="routes"><span class="t-k">05</span><b>Rutas</b><span>Compra → transporte → fabricación → transporte → venta.</span></button>
-      <button class="tile" data-go="history"><span class="t-k">06</span><b>Historial</b><span>Precio mínimo, máximo, promedio y volumen: 24 h a 90 días.</span></button>
-      <button class="tile" data-go="local"><span class="t-k">07</span><b>Venta local</b><span>Compra materiales, fabrica y vende en la misma ciudad, sin transporte.</span></button>
-      <button class="tile" data-go="refine"><span class="t-k">08</span><b>Refinado local</b><span>Compra el recurso, refina y vende en la misma ciudad, sin transporte.</span></button>
-      <button class="tile" data-go="flip"><span class="t-k">09</span><b>Reventa</b><span>Compra barato y revende sin fabricar, en la misma ciudad o entre ciudades.</span></button>
-      <button class="tile" data-go="journal"><span class="t-k">10</span><b>Diario de producción</b><span>Tus lotes y ventas reales: ganancia real y tu parte del mercado.</span></button>
-      <button class="tile wide" data-go="finder"><span class="t-k">11</span><b>¿Qué puedo hacer con mi silver?</b><span>Alternativas según tu capital, tiempo y riesgo.</span></button>
-    </div>
+    <div id="homeNav"></div>
     <div class="cols">
       <section class="panel">
         <div class="ph"><h2>Tu perfil</h2><button class="btn ghost" data-go="settings">Editar</button></div>
@@ -374,6 +362,7 @@
     <div id="settingsBody"></div>
   </section>
 </main>
+<nav class="bottomnav" id="bottomNav" aria-label="Secciones"></nav>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-card">
@@ -383,40 +372,41 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.9"></script>
-<script src="js/storage.js?v=1.9"></script>
-<script src="js/api.js?v=1.9"></script>
-<script src="js/crafting.js?v=1.9"></script>
-<script src="js/returnRate.js?v=1.9"></script>
-<script src="js/market.js?v=1.9"></script>
-<script src="js/profit.js?v=1.9"></script>
-<script src="js/demand.js?v=1.9"></script>
-<script src="js/risk.js?v=1.9"></script>
-<script src="js/forecast.js?v=1.9"></script>
-<script src="js/invest.js?v=1.9"></script>
-<script src="js/scanner.js?v=1.9"></script>
-<script src="js/chain.js?v=1.9"></script>
-<script src="js/flipping.js?v=1.9"></script>
-<script src="js/journal.js?v=1.9"></script>
-<script src="js/snapshots.js?v=1.9"></script>
-<script src="js/recommend.js?v=1.9"></script>
-<script src="js/assistant.js?v=1.9"></script>
-<script src="js/routes.js?v=1.9"></script>
-<script src="js/history.js?v=1.9"></script>
-<script src="js/finder.js?v=1.9"></script>
-<script src="js/alerts.js?v=1.9"></script>
-<script src="js/export.js?v=1.9"></script>
-<script src="js/ui.js?v=1.9"></script>
-<script src="js/view-calculator.js?v=1.9"></script>
-<script src="js/view-market.js?v=1.9"></script>
-<script src="js/view-routes.js?v=1.9"></script>
-<script src="js/view-extra.js?v=1.9"></script>
-<script src="js/view-intel.js?v=1.9"></script>
-<script src="js/view-simple.js?v=1.9"></script>
-<script src="js/artifacts.js?v=1.9"></script>
-<script src="js/view-artifacts.js?v=1.9"></script>
-<script src="js/view-potions.js?v=1.9"></script>
-<script src="js/view-craft.js?v=1.9"></script>
-<script src="js/app.js?v=1.9"></script>
+<script src="js/version.js?v=2.0"></script>
+<script src="js/storage.js?v=2.0"></script>
+<script src="js/api.js?v=2.0"></script>
+<script src="js/crafting.js?v=2.0"></script>
+<script src="js/returnRate.js?v=2.0"></script>
+<script src="js/market.js?v=2.0"></script>
+<script src="js/profit.js?v=2.0"></script>
+<script src="js/demand.js?v=2.0"></script>
+<script src="js/risk.js?v=2.0"></script>
+<script src="js/forecast.js?v=2.0"></script>
+<script src="js/invest.js?v=2.0"></script>
+<script src="js/scanner.js?v=2.0"></script>
+<script src="js/chain.js?v=2.0"></script>
+<script src="js/flipping.js?v=2.0"></script>
+<script src="js/journal.js?v=2.0"></script>
+<script src="js/snapshots.js?v=2.0"></script>
+<script src="js/recommend.js?v=2.0"></script>
+<script src="js/assistant.js?v=2.0"></script>
+<script src="js/routes.js?v=2.0"></script>
+<script src="js/history.js?v=2.0"></script>
+<script src="js/finder.js?v=2.0"></script>
+<script src="js/alerts.js?v=2.0"></script>
+<script src="js/export.js?v=2.0"></script>
+<script src="js/ui.js?v=2.0"></script>
+<script src="js/nav.js?v=2.0"></script>
+<script src="js/view-calculator.js?v=2.0"></script>
+<script src="js/view-market.js?v=2.0"></script>
+<script src="js/view-routes.js?v=2.0"></script>
+<script src="js/view-extra.js?v=2.0"></script>
+<script src="js/view-intel.js?v=2.0"></script>
+<script src="js/view-simple.js?v=2.0"></script>
+<script src="js/artifacts.js?v=2.0"></script>
+<script src="js/view-artifacts.js?v=2.0"></script>
+<script src="js/view-potions.js?v=2.0"></script>
+<script src="js/view-craft.js?v=2.0"></script>
+<script src="js/app.js?v=2.0"></script>
 </body>
 </html>

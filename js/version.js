@@ -1,8 +1,14 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.9';
+  SM.VERSION = '2.0';
   SM.CHANGELOG = [
+    { v: '2.0', date: '2026-10-03', items: [
+      'Menú nuevo: las 17 pantallas se agrupan en 4 secciones (Fabricar, Buscar, Mercado, Mi plata) con una barra fija abajo.',
+      'Arriba solo se ven las pantallas de la sección en la que estás. Cada sección recuerda la última pantalla que usaste.',
+      'Inicio nuevo: tus accesos directos (los eliges con ★) y «Ver todo» ordenado por sección.',
+      'No cambia ningún cálculo ni se pierde nada de lo guardado.'
+    ] },
     { v: '1.9', date: '2026-10-03', items: [
       'Nuevo: Fabricación. Armas, secundarias, armaduras, cascos, botas, bolsos y capas en tabla, igual que Pociones.',
       'Eliges la categoría y ves cada objeto con una fila por tier y una columna por encantamiento (.0 a .4): costo, ganancia o ROI.',
