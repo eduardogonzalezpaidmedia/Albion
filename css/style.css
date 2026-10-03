@@ -264,3 +264,15 @@ pre.json{white-space:pre-wrap;word-break:break-word;font:12px/1.45 var(--mono);b
 .sp-day input{min-width:0;width:100%}
 .sp-day .small{grid-column:1/-1}
 #spDays{margin-bottom:12px}
+/* v1.7 — Pociones */
+.po-wrap{display:grid;gap:0;align-items:start}
+.po-main{min-width:0;display:grid}
+.po-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.po-fam{display:grid;gap:2px;text-align:left;min-width:0;background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 10px;cursor:pointer;font:inherit}
+.po-fam b{font-size:14px}
+.po-fam[aria-pressed="true"]{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--bg2))}
+@media (min-width:760px){
+  .po-wrap{grid-template-columns:260px 1fr;gap:0 4px}
+  .po-list{grid-template-columns:1fr}
+  .po-side{position:sticky;top:56px;max-height:calc(100vh - 70px);overflow-y:auto}
+}

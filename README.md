@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 1.7 | 2026-10-03 | Pociones: lista por tipo, materiales con precios a mano y rentabilidad. |
 | 1.6 | 2026-10-02 | Artefactos: objetos con artefacto para el Mercado Negro comprando el artefacto por orden de compra; orden por ganancia diaria. |
 | 1.5 | 2026-10-02 | Calculadora sencilla: ventas de cada día editables a mano. |
 | 1.4 | 2026-10-02 | Calculadora sencilla para el Mercado Negro: factible o no, materiales, precios editables, ventas de 7 días y cantidad sugerida. |

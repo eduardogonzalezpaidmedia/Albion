@@ -1,8 +1,13 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.6';
+  SM.VERSION = '1.7';
   SM.CHANGELOG = [
+    { v: '1.7', date: '2026-10-03', items: [
+      'Nuevo: Pociones. Lista de pociones por tipo; al elegir una aparecen sus materiales para escribir el precio de cada uno.',
+      'Calcula la rentabilidad: costo total y por poción, ingreso neto, ganancia, ROI y precio mínimo para no perder.',
+      'Los precios que escribes se guardan en el dispositivo y sirven para todas las pociones que usan ese material. Los precios en línea son opcionales.'
+    ] },
     { v: '1.6', date: '2026-10-02', items: [
       'Nuevo: Artefactos. Busca objetos con artefacto (T4 y T5 por defecto, calidad normal) para vender al Mercado Negro.',
       'Para cada artefacto indica en qué ciudad poner la orden de compra, cuánto ofrecer y cuánto ahorras frente a comprarlo directo.',
