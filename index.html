@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="1.7">
+<html lang="es" data-version="1.8">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=1.7">
+<link rel="stylesheet" href="css/style.css?v=1.8">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.7</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v1.8</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -184,25 +184,28 @@
 
   <!-- POCIONES -->
   <section class="view" id="view-potions" hidden>
-    <div class="po-wrap">
-      <section class="panel po-side">
-        <div class="ph"><h2>Pociones</h2><span class="muted small">Elige el tipo</span></div>
-        <div id="poList" class="po-list"></div>
+    <section class="panel intel-head">
+      <div class="ph"><h2>Pociones</h2><span class="muted small" id="poSummary"></span></div>
+      <nav class="isubnav" id="poNav" aria-label="Secciones de pociones"><button type="button" data-sub="table">Pociones</button><button type="button" data-sub="mats">Precios de materiales</button></nav>
+    </section>
+    <div id="poSubTable">
+      <section class="panel"><div class="ph"><h2>Ajustes</h2></div><div id="poSettings"></div></section>
+      <div class="banner" id="poMissing" hidden></div>
+      <section class="panel">
+        <div class="row gap wrap"><label class="field inline"><span class="lbl">Mostrar</span><select id="poShow"><option value="cost">Costo por poción</option><option value="profit">Ganancia por poción</option><option value="roi">ROI</option></select></label>
+          <button class="btn" id="poLoadSale">Traer precios de venta en línea</button></div>
+        <p class="hint">Toca cualquier número para ver los materiales, anotar tu precio de venta y la rentabilidad. En verde o rojo, debajo del costo, la ganancia por poción cuando ya tiene precio de venta.</p>
+        <div id="poTable"></div>
       </section>
-      <div class="po-main" id="poDetail">
-        <section class="panel">
-          <div class="ph"><h2 id="poTitle">Poción</h2><span class="muted small" id="poRecipe"></span></div>
-          <div class="field"><span class="lbl">Tier</span><div class="chips" id="poTiers"></div></div>
-          <div class="field"><span class="lbl">Encantamiento</span><div class="chips" id="poEnch"></div></div>
-        </section>
-        <section class="panel">
-          <div class="ph"><h2>Materiales</h2><div class="btns"><button class="btn" id="poLoad">Ver precios en línea</button><button class="btn ghost" id="poClear">Borrar precios</button></div></div>
-          <p class="msg small" id="poMsg">Escribe el precio de cada material. Se guardan en este dispositivo.</p>
-          <div id="poMats" class="sp-mats"></div>
-        </section>
-        <section class="panel"><div class="ph"><h2>Venta y fabricación</h2></div><div id="poOpts"></div></section>
-        <section class="panel"><div class="ph"><h2>Rentabilidad</h2></div><div id="poResult"></div></section>
-      </div>
+    </div>
+    <div id="poSubMats" hidden>
+      <section class="panel">
+        <div class="ph"><h2>Precios de materiales</h2><div class="btns"><button class="btn" id="poLoadMats">Ver precios en línea</button><button class="btn ghost" id="poClearMats">Borrar todo</button></div></div>
+        <p class="small" id="poMatCount"></p><p class="msg small" id="poMatMsg">Escribe lo que pagas por unidad de cada material.</p>
+        <div id="poFillBox" hidden class="btns"><button class="btn sm" id="poFill">Rellenar solo los vacíos con el precio en línea</button><button class="btn sm ghost" id="poFillAll">Reemplazar todos</button></div>
+        <div id="poClearC" hidden class="confirm"><span>¿Borrar todos los precios de materiales?</span><button class="btn" id="poClearYes">Sí, borrar</button></div>
+        <div id="poMatGroups"></div>
+      </section>
     </div>
   </section>
 
@@ -350,39 +353,39 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=1.7"></script>
-<script src="js/storage.js?v=1.7"></script>
-<script src="js/api.js?v=1.7"></script>
-<script src="js/crafting.js?v=1.7"></script>
-<script src="js/returnRate.js?v=1.7"></script>
-<script src="js/market.js?v=1.7"></script>
-<script src="js/profit.js?v=1.7"></script>
-<script src="js/demand.js?v=1.7"></script>
-<script src="js/risk.js?v=1.7"></script>
-<script src="js/forecast.js?v=1.7"></script>
-<script src="js/invest.js?v=1.7"></script>
-<script src="js/scanner.js?v=1.7"></script>
-<script src="js/chain.js?v=1.7"></script>
-<script src="js/flipping.js?v=1.7"></script>
-<script src="js/journal.js?v=1.7"></script>
-<script src="js/snapshots.js?v=1.7"></script>
-<script src="js/recommend.js?v=1.7"></script>
-<script src="js/assistant.js?v=1.7"></script>
-<script src="js/routes.js?v=1.7"></script>
-<script src="js/history.js?v=1.7"></script>
-<script src="js/finder.js?v=1.7"></script>
-<script src="js/alerts.js?v=1.7"></script>
-<script src="js/export.js?v=1.7"></script>
-<script src="js/ui.js?v=1.7"></script>
-<script src="js/view-calculator.js?v=1.7"></script>
-<script src="js/view-market.js?v=1.7"></script>
-<script src="js/view-routes.js?v=1.7"></script>
-<script src="js/view-extra.js?v=1.7"></script>
-<script src="js/view-intel.js?v=1.7"></script>
-<script src="js/view-simple.js?v=1.7"></script>
-<script src="js/artifacts.js?v=1.7"></script>
-<script src="js/view-artifacts.js?v=1.7"></script>
-<script src="js/view-potions.js?v=1.7"></script>
-<script src="js/app.js?v=1.7"></script>
+<script src="js/version.js?v=1.8"></script>
+<script src="js/storage.js?v=1.8"></script>
+<script src="js/api.js?v=1.8"></script>
+<script src="js/crafting.js?v=1.8"></script>
+<script src="js/returnRate.js?v=1.8"></script>
+<script src="js/market.js?v=1.8"></script>
+<script src="js/profit.js?v=1.8"></script>
+<script src="js/demand.js?v=1.8"></script>
+<script src="js/risk.js?v=1.8"></script>
+<script src="js/forecast.js?v=1.8"></script>
+<script src="js/invest.js?v=1.8"></script>
+<script src="js/scanner.js?v=1.8"></script>
+<script src="js/chain.js?v=1.8"></script>
+<script src="js/flipping.js?v=1.8"></script>
+<script src="js/journal.js?v=1.8"></script>
+<script src="js/snapshots.js?v=1.8"></script>
+<script src="js/recommend.js?v=1.8"></script>
+<script src="js/assistant.js?v=1.8"></script>
+<script src="js/routes.js?v=1.8"></script>
+<script src="js/history.js?v=1.8"></script>
+<script src="js/finder.js?v=1.8"></script>
+<script src="js/alerts.js?v=1.8"></script>
+<script src="js/export.js?v=1.8"></script>
+<script src="js/ui.js?v=1.8"></script>
+<script src="js/view-calculator.js?v=1.8"></script>
+<script src="js/view-market.js?v=1.8"></script>
+<script src="js/view-routes.js?v=1.8"></script>
+<script src="js/view-extra.js?v=1.8"></script>
+<script src="js/view-intel.js?v=1.8"></script>
+<script src="js/view-simple.js?v=1.8"></script>
+<script src="js/artifacts.js?v=1.8"></script>
+<script src="js/view-artifacts.js?v=1.8"></script>
+<script src="js/view-potions.js?v=1.8"></script>
+<script src="js/app.js?v=1.8"></script>
 </body>
 </html>

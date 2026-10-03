@@ -1,18 +1,20 @@
-/* Silver Master — Fabricación de pociones.
-   Lista de pociones por tipo; al elegir una se muestran sus materiales, escribes el precio de cada uno
-   y el precio de venta, y calcula la rentabilidad. Usa el mismo motor que la Calculadora (SM.engine.evaluate).
-   Los precios que escribes se guardan en este dispositivo y sirven para todas las pociones que usan ese material. */
+/* Silver Master — Pociones (v1.8).
+   Dos pantallas:
+   1) «Precios de materiales»: todos los materiales de pociones, agrupados, con una casilla de precio cada uno.
+   2) «Pociones»: tabla por tipo → una fila por tier y una columna por encantamiento, con el costo (o la ganancia) por poción.
+   Tocar una celda abre el detalle: materiales, precio de venta y rentabilidad.
+   Usa el mismo motor que la Calculadora (SM.engine.evaluate). Los precios se guardan en este dispositivo. */
 (function (root) {
   const SM = root.SM = root.SM || {};
   const U = () => SM.ui;
-  const KEY = 'potion-prices';            // { mats: {item_id: precio}, sale: {item_id: precio} }
-  const S = { fam: null, tier: null, ench: 0, idx: {}, loaded: false };
-  let FAMS = null;
+  const KEY = 'potion-prices', CFG = 'potion-settings';
+  const S = { sub: 'table', idx: {}, loaded: false, show: 'cost' };
+  let FAMS = null, MATS = null;
 
   const store = () => Object.assign({ mats: {}, sale: {} }, SM.storage.get(KEY, {}));
   const save = p => SM.storage.set(KEY, p);
+  const cfg = () => { const P = SM.storage.profile(); return Object.assign({ bonus: 'no', daily: 0, focus: !!P.focus, premium: !!P.premium, fee: 0, mode: 'order', city: P.city }, SM.storage.get(CFG, {})); };
 
-  /** Agrupa las pociones por tipo (misma receta base en distintos tiers y encantamientos). */
   function families() {
     if (FAMS) return FAMS;
     const g = {};
@@ -28,134 +30,190 @@
     }).sort((a, b) => a.label.localeCompare(b.label, 'es'));
     return FAMS;
   }
-  const current = () => S.fam && S.fam.items.find(i => i.tier === S.tier && i.enchantment === S.ench);
+
+  /** Materiales de todas las pociones, agrupados. */
+  const GROUPS = [
+    { key: 'herb', label: 'Hierbas', test: id => /_(AGARIC|COMFREY|BURDOCK|TEASEL|FOXGLOVE|MULLEIN|YARROW)$/.test(id) },
+    { key: 'animal', label: 'Huevos, leche y manteca', test: id => /_(EGG|MILK|BUTTER)$/.test(id) },
+    { key: 'alcohol', label: 'Alcohol', test: id => /_ALCOHOL$/.test(id) },
+    { key: 'extract', label: 'Extractos arcanos', test: id => /ALCHEMY_EXTRACT/.test(id) },
+    { key: 'rare', label: 'Ingredientes raros', test: id => /ALCHEMY_RARE/.test(id) },
+    { key: 'other', label: 'Otros', test: () => true }
+  ];
+  function materials() {
+    if (MATS) return MATS;
+    const ids = new Set();
+    families().forEach(f => f.items.forEach(it => { const r = SM.crafting.recipe(it.item_id); r && r.materials.forEach(m => ids.add(m.item_id)); }));
+    const tier = id => +(/^T(\d)/.exec(id) || [0, 0])[1];
+    MATS = GROUPS.map(g => ({ key: g.key, label: g.label, sub: [] }));
+    [...ids].forEach(id => {
+      const gi = GROUPS.findIndex(g => g.test(id)), g = MATS[gi];
+      const subKey = g.key === 'rare' ? id.replace(/^T\d_ALCHEMY_RARE_/, '') : g.key === 'animal' ? id.replace(/^T\d_/, '') : id;
+      let s = g.sub.find(x => x.key === subKey); if (!s) g.sub.push(s = { key: subKey, items: [] });
+      s.items.push({ id, tier: tier(id), name: SM.crafting.name(id) });
+    });
+    MATS = MATS.filter(g => g.sub.length);
+    MATS.forEach(g => { g.sub.forEach(s => s.items.sort((a, b) => a.tier - b.tier || a.id.localeCompare(b.id))); g.sub.sort((a, b) => (g.key === 'rare' || g.key === 'animal') ? a.items[0].name.localeCompare(b.items[0].name, 'es') : a.items[0].tier - b.items[0].tier || a.items[0].id.localeCompare(b.items[0].id)); g.count = g.sub.reduce((n, s) => n + s.items.length, 0); });
+    return MATS;
+  }
 
   function init() {
-    const u = U(), P = SM.storage.profile(), fams = families();
-    const cities = SM.data.cities.filter(c => c.type !== 'black_market').map(c => c.id);
-    u.$('#poList').innerHTML = fams.map(f => `<button type="button" class="po-fam" data-fam="${u.esc(f.key)}"><b>${u.esc(f.label)}</b><span class="small muted">${f.tiers.map(t => 'T' + t).join(' · ')}</span></button>`).join('');
-    u.$('#poList').onclick = e => { const b = e.target.closest('[data-fam]'); if (b) pick(b.dataset.fam, true); };
-    u.$('#poOpts').innerHTML = `<div class="fields">
-      <label class="field"><span class="lbl">Cantidad a fabricar</span><input id="poUnits" type="number" min="1" inputmode="numeric" value="100"></label>
-      <label class="field"><span class="lbl">Precio de venta (por poción)</span><input id="poSale" type="number" min="0" inputmode="numeric" placeholder="Escríbelo"><span class="hint" id="poSaleHint"></span></label>
-      <label class="field"><span class="lbl">Tipo de venta</span><select id="poMode"><option value="order">Publicar orden de venta</option><option value="instant">Venta inmediata (orden de compra)</option></select></label>
-      <label class="field"><span class="lbl">Fabricas en</span><select id="poCity">${u.options(cities, P.city)}</select></label>
-      <label class="field"><span class="lbl">Bono de ciudad para pociones</span><select id="poBonus"><option value="no">No aplica</option><option value="yes">Sí, aplica</option></select><span class="hint">No hay una ciudad con bono de pociones verificado: márcalo tú si en el juego lo ves.</span></label>
-      <label class="field"><span class="lbl">Foco</span><span class="check"><input id="poFocus" type="checkbox"${P.focus ? ' checked' : ''}> Usar foco</span></label>
-      <label class="field"><span class="lbl">Premium</span><span class="check"><input id="poPrem" type="checkbox"${P.premium ? ' checked' : ''}> Tengo Premium</span></label>
-      <label class="field"><span class="lbl">Tarifa de fabricación (total)</span><input id="poFee" type="number" min="0" inputmode="numeric" value="0"><span class="hint">Cópiala de la ventana de fabricación.</span></label>
+    const u = U();
+    u.$('#poNav').onclick = e => { const b = e.target.closest('[data-sub]'); if (b) sub(b.dataset.sub); };
+    buildSettings(); buildMaterials();
+    u.$('#poShow').onchange = () => { S.show = u.$('#poShow').value; table(); };
+    u.$('#poMissing').onclick = e => { if (e.target.closest('a')) { e.preventDefault(); sub('mats'); } };
+    u.$('#poLoadSale').onclick = loadSale;
+    sub('table');
+  }
+  function sub(k) {
+    const u = U(); S.sub = k;
+    u.$$('#poNav button').forEach(b => { if (b.dataset.sub === k) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    u.$('#poSubTable').hidden = k !== 'table'; u.$('#poSubMats').hidden = k !== 'mats';
+    if (k === 'table') table();
+    window.scrollTo({ top: 0 });
+  }
+
+  /* ---------- ajustes ---------- */
+  function buildSettings() {
+    const u = U(), c = cfg(), cities = SM.data.cities.filter(x => x.type !== 'black_market').map(x => x.id);
+    u.$('#poSettings').innerHTML = `<div class="fields">
+      <label class="field"><span class="lbl">Ubicación</span><select id="pcBonus"><option value="no">Ciudad sin bono de pociones</option><option value="yes"${c.bonus === 'yes' ? ' selected' : ''}>Ciudad con bono de pociones</option></select></label>
+      <label class="field"><span class="lbl">Bono del día</span><select id="pcDaily">${u.options([{ value: 0, label: 'Ninguno' }, { value: 10, label: '+10%' }, { value: 20, label: '+20%' }], c.daily)}</select></label>
+      <label class="field"><span class="lbl">Foco</span><span class="check"><input id="pcFocus" type="checkbox"${c.focus ? ' checked' : ''}> Usar foco</span></label>
+      <label class="field"><span class="lbl">Tarifa de fabricación (por poción)</span><input id="pcFee" type="number" min="0" inputmode="numeric" value="${c.fee}"></label>
+      <label class="field"><span class="lbl">Tipo de venta</span><select id="pcMode"><option value="order">Publicar orden de venta</option><option value="instant"${c.mode === 'instant' ? ' selected' : ''}>Venta inmediata</option></select></label>
+      <label class="field"><span class="lbl">Premium</span><span class="check"><input id="pcPrem" type="checkbox"${c.premium ? ' checked' : ''}> Tengo Premium</span></label>
+      <label class="field"><span class="lbl">Ciudad (precios en línea)</span><select id="pcCity">${u.options(cities, c.city)}</select></label>
     </div>`;
-    ['poUnits', 'poFee'].forEach(id => u.$('#' + id).addEventListener('input', result));
-    u.$('#poSale').addEventListener('input', () => { const it = current(), p = store(), v = +u.$('#poSale').value; if (v > 0) p.sale[it.item_id] = v; else delete p.sale[it.item_id]; save(p); result(); });
-    ['poMode', 'poCity', 'poBonus', 'poFocus', 'poPrem'].forEach(id => u.$('#' + id).addEventListener('change', () => { mats(); result(); }));
-    u.$('#poTiers').onclick = e => { const b = e.target.closest('[data-t]'); if (b) { S.tier = +b.dataset.t; detail(); } };
-    u.$('#poEnch').onclick = e => { const b = e.target.closest('[data-e]'); if (b) { S.ench = +b.dataset.e; detail(); } };
-    u.$('#poLoad').onclick = load;
-    u.$('#poClear').onclick = () => { const it = current(), p = store(), r = SM.crafting.recipe(it.item_id); r.materials.forEach(m => delete p.mats[m.item_id]); delete p.sale[it.item_id]; save(p); detail(); u.toast('Precios de esta poción borrados'); };
-    pick(fams[0].key, false);
+    const read = () => { SM.storage.set(CFG, { bonus: u.$('#pcBonus').value, daily: +u.$('#pcDaily').value, focus: u.$('#pcFocus').checked, premium: u.$('#pcPrem').checked, fee: +u.$('#pcFee').value || 0, mode: u.$('#pcMode').value, city: u.$('#pcCity').value }); table(); };
+    ['pcBonus', 'pcDaily', 'pcFocus', 'pcPrem', 'pcMode', 'pcCity'].forEach(id => u.$('#' + id).addEventListener('change', read));
+    u.$('#pcFee').addEventListener('input', read);
   }
-
-  function pick(key, scroll) {
-    const u = U(); S.fam = families().find(f => f.key === key);
-    if (!S.fam.tiers.includes(S.tier)) S.tier = S.fam.tiers[0];
-    u.$$('#poList .po-fam').forEach(b => b.setAttribute('aria-pressed', b.dataset.fam === key));
-    detail();
-    if (scroll && window.matchMedia('(max-width: 759px)').matches) u.$('#poDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
-  function detail() {
-    const u = U(), f = S.fam;
-    const enchs = [...new Set(f.items.filter(i => i.tier === S.tier).map(i => i.enchantment))];
-    if (!enchs.includes(S.ench)) S.ench = enchs[0];
-    const it = current(), r = SM.crafting.recipe(it.item_id);
-    u.$('#poTitle').innerHTML = `${u.esc(it.name)} <span class="tag">T${it.tier}.${it.enchantment}</span>`;
-    u.$('#poRecipe').textContent = r ? 'Cada crafteo da ' + r.quantity_produced + ' pociones.' : 'Sin receta en los datos del juego.';
-    u.$('#poTiers').innerHTML = f.tiers.map(t => `<button type="button" class="chip" data-t="${t}" aria-pressed="${t === S.tier}">T${t} · ${u.esc(f.items.find(i => i.tier === t).name.replace(f.label, '').trim() || 'normal')}</button>`).join('');
-    u.$('#poEnch').innerHTML = enchs.map(e => `<button type="button" class="chip" data-e="${e}" aria-pressed="${e === S.ench}">.${e}</button>`).join('');
-    const p = store(); u.$('#poSale').value = p.sale[it.item_id] || '';
-    saleHint(); mats(); result();
-  }
-
-  function ctxFor() {
-    const u = U(), p = store(), man = {};
+  function context(units) {
+    const c = cfg(), p = store(), man = {};
     Object.entries(p.mats).forEach(([id, v]) => { if (v > 0) man[id] = { price: v }; });
-    return SM.engine.context({ craftCity: u.$('#poCity').value, focus: u.$('#poFocus').checked, premium: u.$('#poPrem').checked, units: Math.max(1, +u.$('#poUnits').value || 1),
-      manualPrices: man, manualSale: +u.$('#poSale').value || null, saleMode: u.$('#poMode').value, bonusOverride: u.$('#poBonus').value === 'yes', maxAgeH: null,
-      buyLocations: S.loaded ? SM.crafting.buyLocations() : [], sellMarkets: [], fee: { value: +u.$('#poFee').value || 0, mode: 'total' }, transport: { legs: [], perUnit: 0 } });
+    return SM.engine.context({ craftCity: c.city, focus: c.focus, premium: c.premium, dailyBonus: c.daily, bonusOverride: c.bonus === 'yes', units: units || 1, manualPrices: man,
+      saleMode: c.mode, maxAgeH: null, buyLocations: [], sellMarkets: [], fee: { value: c.fee, mode: 'per_unit' }, transport: { legs: [], perUnit: 0 } });
+  }
+  function evalItem(it, units) {
+    const p = store(), ctx = context(units || (SM.crafting.recipe(it.item_id) || {}).quantity_produced || 1);
+    ctx.manualSale = p.sale[it.item_id] || null;
+    return { e: SM.engine.evaluate(it, {}, ctx), ctx };
   }
 
-  function saleHint() {
-    const u = U(), it = current(), h = u.$('#poSaleHint');
-    if (!S.loaded) { h.textContent = ''; return; }
-    const mode = u.$('#poMode').value, city = u.$('#poCity').value, r = SM.market.row(S.idx, it.item_id, city, 1);
-    const o = mode === 'order' ? SM.market.sellOrder(r) : SM.market.buyOrder(r);
-    h.innerHTML = o ? `En línea en ${u.esc(city)}: <b>${u.fmt(o.price)}</b> ${u.ageBadge(o.date)} <button type="button" class="btn sm" id="poUseSale">Usar</button>` : `Sin precio en línea en ${u.esc(city)}.`;
-    const b = u.$('#poUseSale'); if (b) b.onclick = () => { u.$('#poSale').value = o.price; u.$('#poSale').dispatchEvent(new Event('input')); };
+  /* ---------- tabla de pociones ---------- */
+  function table() {
+    const u = U(), fams = families(), p = store();
+    let missing = new Set(), n = 0, rate = null;
+    const cell = it => {
+      if (!it) return '<td class="n muted">·</td>';
+      n++;
+      const { e } = evalItem(it), c = e.calc; rate = c.returnRate;
+      c.lines.forEach(l => { if (l.price === null) missing.add(l.item_id); });
+      if (c.totalCost === null) return `<td class="n po-cell" data-it="${u.esc(it.item_id)}"><span class="muted">—</span></td>`;
+      const cost = c.totalCost / c.made, sale = p.sale[it.item_id];
+      let main = u.fmt(cost), cls = '', subl = '';
+      if (S.show !== 'cost') {
+        if (!sale) { main = '<span class="muted small">sin venta</span>'; }
+        else { const v = S.show === 'profit' ? c.profitPerUnit : c.roi; main = S.show === 'profit' ? u.fmt(v) : u.pct(v); cls = v > 0 ? 'pos' : v < 0 ? 'neg' : ''; }
+      } else if (sale) subl = `<i class="${c.profit > 0 ? 'pos' : 'neg'}">${c.profit > 0 ? '+' : ''}${u.fmt(c.profitPerUnit)}</i>`;
+      return `<td class="n po-cell ${cls}" data-it="${u.esc(it.item_id)}"><b>${main}</b>${subl}</td>`;
+    };
+    const html = fams.map(f => `<tbody><tr class="po-fh"><th colspan="5">${u.esc(f.label)}</th></tr>${f.tiers.map(t => `<tr><td class="po-t">T${t}<span class="small muted"> ${u.esc(f.items.find(i => i.tier === t).name.replace(f.label, '').trim())}</span></td>${[0, 1, 2, 3].map(en => cell(f.items.find(i => i.tier === t && i.enchantment === en))).join('')}</tr>`).join('')}</tbody>`).join('');
+    u.$('#poTable').innerHTML = `<div class="tablewrap"><table class="grid-table po-table"><thead><tr><th>Tier</th><th class="n">.0</th><th class="n">.1</th><th class="n">.2</th><th class="n">.3</th></tr></thead>${html}</table></div>`;
+    u.$('#poSummary').innerHTML = `${n} recetas · retorno efectivo: <b class="silver">${rate === null ? '—' : u.pct(rate * 100)}</b> · ${S.show === 'cost' ? 'costo por poción' : S.show === 'profit' ? 'ganancia por poción' : 'ROI'}`;
+    const mb = u.$('#poMissing');
+    mb.hidden = !missing.size;
+    mb.innerHTML = `⚠ Falta el precio de ${missing.size} material(es): <a href="#">abre Precios de materiales</a> para completarlos.`;
+    u.$$('#poTable .po-cell').forEach(td => td.onclick = () => detail(SM.crafting.item(td.dataset.it)));
   }
 
-  /** Lista de materiales con su casilla de precio. Solo se reconstruye al cambiar de poción u opciones. */
-  function mats() {
-    const u = U(), it = current(), ctx = ctxFor(), e = SM.engine.evaluate(it, S.idx, ctx), p = store();
-    saleHint();
-    u.$('#poMats').innerHTML = e.calc.lines.map(l => {
-      const on = S.loaded ? SM.market.cheapestBuy(S.idx, l.item_id, SM.crafting.buyLocations(), null) : null;
-      return `<div class="sp-mat" data-row="${u.esc(l.item_id)}">
-        <div class="sp-mh"><b>${u.esc(SM.crafting.label(l.item_id))}</b><span class="sp-q">Comprar <b data-q></b></span></div>
-        <p class="small muted" data-info></p>
-        ${on ? `<p class="small">En línea más barato: <b>${u.esc(on.location)}</b> a <span class="silver">${u.fmt(on.price)}</span> ${u.ageBadge(on.date)} <button type="button" class="btn sm" data-use="${on.price}">Usar</button></p>` : ''}
-        <label class="field inline sp-in"><span class="lbl">Precio por unidad</span><input type="number" min="0" inputmode="numeric" data-mat="${u.esc(l.item_id)}" value="${p.mats[l.item_id] || ''}" placeholder="Escríbelo"></label>
-        <p class="small sp-cost">Costo: <b data-cost></b></p>
-      </div>`;
-    }).join('');
-    u.$$('#poMats [data-mat]').forEach(inp => inp.addEventListener('input', () => { const q = store(), v = +inp.value; if (v > 0) q.mats[inp.dataset.mat] = v; else delete q.mats[inp.dataset.mat]; save(q); result(); }));
-    u.$$('#poMats [data-use]').forEach(b => b.onclick = () => { const inp = b.closest('.sp-mat').querySelector('[data-mat]'); inp.value = b.dataset.use; inp.dispatchEvent(new Event('input')); });
+  /* ---------- detalle de una poción ---------- */
+  function detail(it) {
+    const u = U();
+    u.modal(it.name + ' ' + it.tier + '.' + it.enchantment, `<div class="fields">
+        <label class="field"><span class="lbl">Precio de venta (por poción)</span><input id="pdSale" type="number" min="0" inputmode="numeric" value="${store().sale[it.item_id] || ''}" placeholder="Escríbelo"><span class="hint" id="pdHint"></span></label>
+        <label class="field"><span class="lbl">Cantidad a fabricar</span><input id="pdUnits" type="number" min="1" inputmode="numeric" value="100"></label>
+      </div><div id="pdOut"></div>`);
+    const draw = () => {
+      const units = Math.max(1, +u.$('#pdUnits').value || 1), { e, ctx } = evalItem(it, units), c = e.calc, mode = cfg().mode;
+      const be = c.totalCost !== null ? SM.invest.breakeven(c.totalCost / c.made, mode, ctx.taxPct, ctx.setupPct) : null;
+      const miss = c.lines.filter(l => l.price === null).length, sale = store().sale[it.item_id];
+      let v;
+      if (miss) v = { cls: 'wait', t: 'Faltan precios', d: `Falta el precio de ${miss} material(es).` };
+      else if (!sale) v = { cls: 'wait', t: 'Falta el precio de venta', d: `Para no perder: ${u.fmt(Math.ceil(be))} o más por poción.` };
+      else if (c.profit > 0 && c.roi >= 5) v = { cls: 'yes', t: 'RENTABLE', d: `Ganas ${u.fmtQ(c.profitPerUnit)} por poción (${u.pct(c.roi)}).` };
+      else if (c.profit > 0) v = { cls: 'meh', t: 'RENTABLE, PERO JUSTO', d: `Margen de solo ${u.pct(c.roi)}.` };
+      else v = { cls: 'no', t: 'NO ES RENTABLE', d: `Pierdes ${u.fmtQ(Math.abs(c.profitPerUnit))} por poción. Mínimo: ${u.fmt(Math.ceil(be))}.` };
+      const k = (l, val, s2, cls) => `<div class="kpi ${cls || ''}"><span class="lbl">${l}</span><b>${val}</b><span class="s">${s2 || ''}</span></div>`;
+      u.$('#pdOut').innerHTML = `<div class="sp-verdict v-${v.cls}"><b>${v.t}</b><span>${v.d}</span></div>
+        <div class="tablewrap"><table class="grid-table"><thead><tr><th>Material</th><th class="n">Comprar</th><th class="n">Precio</th><th class="n">Costo</th></tr></thead><tbody>
+        ${c.lines.map(l => `<tr><td>${u.esc(SM.crafting.label(l.item_id))}<br><span class="small muted">${l.perCraft} × ${c.crafts}${l.returnable ? ' · vuelven ' + u.fmtQ(l.recovered) : ' · no retorna'}</span></td><td class="n">${l.toBuy === null ? '—' : l.toBuy.toLocaleString('es-CL')}</td><td class="n">${l.price === null ? '<span class="warn">falta</span>' : u.fmt(l.price)}</td><td class="n">${l.cost === null ? '—' : u.fmt(l.cost)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="kpis">
+          ${k('Pociones que salen', c.made.toLocaleString('es-CL'), `${c.crafts} crafteo(s) × ${c.yieldN}`)}
+          ${k('Costo total', u.fmt(c.totalCost), c.totalCost === null ? '' : `materiales ${u.fmt(c.materialCost)}${c.craftingFee ? ' + tarifa ' + u.fmt(c.craftingFee) : ''}`)}
+          ${k('Costo por poción', c.totalCost === null ? 'Sin datos' : u.fmtQ(c.totalCost / c.made), 'retorno ' + u.pct(c.returnRate * 100))}
+          ${k('Ingreso neto', u.fmt(c.sale ? c.sale.net : null), c.sale ? `impuesto ${u.fmt(c.sale.tax)}${c.sale.setup ? ' + publicación ' + u.fmt(c.sale.setup) : ''}` : '')}
+          ${k('Ganancia del lote', u.fmt(c.profit), c.roi === null ? '' : 'ROI ' + u.pct(c.roi), c.profit > 0 ? 'pos' : c.profit < 0 ? 'neg' : '')}
+          ${k('Precio mínimo', be === null ? 'Sin datos' : u.fmt(Math.ceil(be)), 'para no perder')}
+        </div>`;
+      const h = u.$('#pdHint'), c2 = cfg(), r = S.loaded ? SM.market.row(S.idx, it.item_id, c2.city, 1) : null, o = r ? (c2.mode === 'order' ? SM.market.sellOrder(r) : SM.market.buyOrder(r)) : null;
+      h.innerHTML = o ? `En línea en ${u.esc(c2.city)}: <b>${u.fmt(o.price)}</b> ${u.ageBadge(o.date)} <button type="button" class="btn sm" id="pdUse">Usar</button>` : '';
+      const b = u.$('#pdUse'); if (b) b.onclick = () => { u.$('#pdSale').value = o.price; u.$('#pdSale').dispatchEvent(new Event('input')); };
+    };
+    u.$('#pdSale').addEventListener('input', () => { const p = store(), val = +u.$('#pdSale').value; if (val > 0) p.sale[it.item_id] = val; else delete p.sale[it.item_id]; save(p); draw(); table(); });
+    u.$('#pdUnits').addEventListener('input', draw);
+    draw();
   }
 
-  /** Recalcula cantidades, costos y rentabilidad sin tocar las casillas (no pierdes el foco al escribir). */
-  function result() {
-    const u = U(), it = current(); if (!it) return;
-    const ctx = ctxFor(); ctx.buyLocations = [];                    // el cálculo usa SOLO los precios que escribiste
-    const e = SM.engine.evaluate(it, S.idx, ctx), c = e.calc;
-    c.lines.forEach(l => {
-      const row = u.$(`#poMats [data-row="${l.item_id}"]`); if (!row) return;
-      row.querySelector('[data-q]').textContent = l.toBuy === null ? '—' : l.toBuy.toLocaleString('es-CL');
-      row.querySelector('[data-info]').textContent = `${l.perCraft} por crafteo × ${c.crafts} = ${u.fmtQ(l.gross)}` + (l.returnable ? ` · vuelven ${u.fmtQ(l.recovered)} (${u.pct(c.returnRate * 100)})` : ' · no retorna');
-      row.querySelector('[data-cost]').textContent = l.cost === null ? 'falta el precio' : u.fmt(l.cost);
-    });
-    const missing = c.lines.filter(l => l.price === null).length, sale = +u.$('#poSale').value || 0, mode = u.$('#poMode').value;
-    const be = c.totalCost !== null ? SM.invest.breakeven(c.totalCost / c.made, mode, ctx.taxPct, ctx.setupPct) : null;
-    let v;
-    if (missing) v = { cls: 'wait', t: 'Faltan precios', d: `Escribe el precio de ${missing} material(es) para calcular.` };
-    else if (!sale) v = { cls: 'wait', t: 'Falta el precio de venta', d: `Para no perder tendrías que vender cada poción a ${u.fmt(Math.ceil(be))} o más.` };
-    else if (c.profit > 0 && c.roi >= 5) v = { cls: 'yes', t: 'RENTABLE', d: `Ganas ${u.fmtQ(c.profitPerUnit)} por poción (${u.pct(c.roi)}).` };
-    else if (c.profit > 0) v = { cls: 'meh', t: 'RENTABLE, PERO JUSTO', d: `El margen es de solo ${u.pct(c.roi)}.` };
-    else v = { cls: 'no', t: 'NO ES RENTABLE', d: `Pierdes ${u.fmtQ(Math.abs(c.profitPerUnit))} por poción. Tendrías que venderla a ${u.fmt(Math.ceil(be))} o más.` };
-    const k = (l, val, s, cls) => `<div class="kpi ${cls || ''}"><span class="lbl">${l}</span><b>${val}</b><span class="s">${s || ''}</span></div>`;
-    u.$('#poResult').innerHTML = `<div class="sp-verdict v-${v.cls}"><b>${v.t}</b><span>${v.d}</span></div>
-      <div class="kpis">
-        ${k('Pociones que salen', c.made.toLocaleString('es-CL'), `${c.crafts} crafteo(s) × ${c.yieldN}`)}
-        ${k('Costo total', u.fmt(c.totalCost), c.totalCost === null ? '' : `materiales ${u.fmt(c.materialCost)}${c.craftingFee ? ' + tarifa ' + u.fmt(c.craftingFee) : ''}`)}
-        ${k('Costo por poción', c.totalCost === null ? 'Sin datos' : u.fmtQ(c.totalCost / c.made), 'retorno ' + u.pct(c.returnRate * 100))}
-        ${k('Ingreso neto', u.fmt(c.sale ? c.sale.net : null), c.sale ? `${u.fmt(c.sale.gross)} − impuesto ${u.fmt(c.sale.tax)}${c.sale.setup ? ' − publicación ' + u.fmt(c.sale.setup) : ''}` : '')}
-        ${k('Ganancia del lote', u.fmt(c.profit), c.roi === null ? '' : 'ROI ' + u.pct(c.roi), c.profit > 0 ? 'pos' : c.profit < 0 ? 'neg' : '')}
-        ${k('Precio mínimo para no perder', be === null ? 'Sin datos' : u.fmt(Math.ceil(be)), 'por poción')}
-      </div>
-      <p class="hint">Retorno ${u.pct(c.returnRate * 100)} en ${u.esc(ctx.craftCity)}${e.rr.bonusKind ? ' con bono de ciudad' : ' sin bono'}${ctx.focus ? ' y foco' : ''}. Impuesto de venta ${ctx.taxPct}%${mode === 'order' ? ' + publicación ' + ctx.setupPct + '%' : ''}. Se calcula solo con los precios que escribiste.</p>`;
+  /* ---------- precios de materiales ---------- */
+  function buildMaterials() {
+    const u = U(), p = store();
+    u.$('#poMatGroups').innerHTML = materials().map(g => `<section class="po-group"><h3>${u.esc(g.label)} <span class="small muted">${g.count}</span></h3><div class="po-cards">${g.sub.map(s => `<div class="po-card">${s.items.map(m => `<label class="po-row"><span><span class="tag">T${m.tier}</span> ${u.esc(m.name)}</span><input type="number" min="0" inputmode="numeric" data-mat="${u.esc(m.id)}" value="${p.mats[m.id] || ''}" placeholder="0"><span class="po-on small muted" data-on="${u.esc(m.id)}"></span></label>`).join('')}</div>`).join('')}</div></section>`).join('');
+    u.$$('#poMatGroups [data-mat]').forEach(inp => inp.addEventListener('input', () => { const q = store(), v = +inp.value; if (v > 0) q.mats[inp.dataset.mat] = v; else delete q.mats[inp.dataset.mat]; save(q); count(); }));
+    u.$('#poLoadMats').onclick = loadMats;
+    u.$('#poFill').onclick = () => fill(false);
+    u.$('#poFillAll').onclick = () => fill(true);
+    u.$('#poClearMats').onclick = () => { u.$('#poClearC').hidden = false; };
+    u.$('#poClearYes').onclick = () => { const q = store(); q.mats = {}; save(q); u.$('#poClearC').hidden = true; u.$$('#poMatGroups [data-mat]').forEach(i => i.value = ''); count(); u.toast('Precios de materiales borrados'); };
+    count();
   }
-
-  async function load() {
-    const u = U(), it = current(), r = SM.crafting.recipe(it.item_id), btn = u.$('#poLoad'), msg = u.$('#poMsg');
+  function count() {
+    const u = U(), p = store(), all = materials().reduce((n, g) => n + g.count, 0), done = u.$$('#poMatGroups [data-mat]').filter(i => +i.value > 0).length;
+    u.$('#poMatCount').textContent = `${done} de ${all} materiales con precio. Se guardan solos en este dispositivo.`;
+  }
+  const allMatIds = () => materials().flatMap(g => g.sub.flatMap(s => s.items.map(m => m.id)));
+  async function loadMats() {
+    const u = U(), btn = u.$('#poLoadMats'), msg = u.$('#poMatMsg');
     btn.disabled = true; SM.app.busy(true); msg.textContent = 'Cargando precios en línea…'; msg.className = 'msg small';
     try {
-      const ids = S.fam.items.map(i => i.item_id), matIds = [...new Set(S.fam.items.flatMap(i => (SM.crafting.recipe(i.item_id) || { materials: [] }).materials.map(m => m.item_id)))];
-      const [p1, p2] = await Promise.all([SM.api.getPrices(matIds, SM.crafting.buyLocations(), [1]), SM.api.getPrices(ids, SM.crafting.buyLocations(), [1])]);
-      SM.market.index(p1.rows, S.idx); SM.market.index(p2.rows, S.idx); S.loaded = true;
-      msg.textContent = 'Precios en línea cargados ' + new Date().toLocaleTimeString('es-CL') + ' · Toca «Usar» en cada material para copiarlos, o escribe los tuyos.';
-      mats(); result();
-    } catch (e) { msg.textContent = '⚠ No pude cargar precios en línea (' + e.message + '). Escríbelos a mano.'; msg.className = 'msg small err'; }
+      const pr = await SM.api.getPrices(allMatIds(), SM.crafting.buyLocations(), [1]);
+      SM.market.index(pr.rows, S.idx); S.matsLoaded = true;
+      u.$$('#poMatGroups [data-on]').forEach(el => { const b = SM.market.cheapestBuy(S.idx, el.dataset.on, SM.crafting.buyLocations(), null); el.innerHTML = b ? `en línea: <b>${u.fmt(b.price)}</b> · ${u.esc(b.location)} · ${u.esc(SM.market.ageText(b.date))}` : 'sin precio en línea'; });
+      u.$('#poFillBox').hidden = false;
+      msg.textContent = 'Precios en línea cargados ' + new Date().toLocaleTimeString('es-CL') + ' · Es el más barato entre las ciudades. No reemplaza lo que escribiste.';
+    } catch (e) { msg.textContent = '⚠ No pude cargar precios en línea (' + e.message + ').'; msg.className = 'msg small err'; }
+    finally { btn.disabled = false; SM.app.busy(false); }
+  }
+  function fill(all) {
+    const u = U(), q = store(); let n = 0;
+    u.$$('#poMatGroups [data-mat]').forEach(inp => { if (!all && +inp.value > 0) return; const b = SM.market.cheapestBuy(S.idx, inp.dataset.mat, SM.crafting.buyLocations(), null); if (b) { inp.value = b.price; q.mats[inp.dataset.mat] = b.price; n++; } });
+    save(q); count(); u.toast(n + ' precios copiados de los datos en línea');
+  }
+  async function loadSale() {
+    const u = U(), btn = u.$('#poLoadSale'), c = cfg();
+    btn.disabled = true; SM.app.busy(true);
+    try {
+      const ids = families().flatMap(f => f.items.map(i => i.item_id));
+      const pr = await SM.api.getPrices(ids, [c.city], [1]); SM.market.index(pr.rows, S.idx); S.loaded = true;
+      const q = store(); let n = 0;
+      ids.forEach(id => { if (q.sale[id] > 0) return; const r = SM.market.row(S.idx, id, c.city, 1), o = c.mode === 'order' ? SM.market.sellOrder(r) : SM.market.buyOrder(r); if (o) { q.sale[id] = o.price; n++; } });
+      save(q); table(); u.toast(n ? n + ' precios de venta tomados de ' + c.city : 'No había precios de venta nuevos en ' + c.city);
+    } catch (e) { u.toast('No pude cargar precios en línea: ' + e.message, 'err'); }
     finally { btn.disabled = false; SM.app.busy(false); }
   }
 
   SM.views = SM.views || {};
-  SM.views.potions = { init, families };
+  SM.views.potions = { init, families, materials };
 })(typeof window !== 'undefined' ? window : globalThis);

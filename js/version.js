@@ -1,8 +1,14 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '1.7';
+  SM.VERSION = '1.8';
   SM.CHANGELOG = [
+    { v: '1.8', date: '2026-10-03', items: [
+      'Pociones rehecha en dos pantallas. «Precios de materiales»: todos los materiales agrupados (hierbas, huevos/leche/manteca, alcohol, extractos, ingredientes raros) con su casilla de precio.',
+      '«Pociones»: tabla por tipo con una fila por tier y una columna por encantamiento (.0 a .3). Muestra costo, ganancia o ROI por poción.',
+      'Ajustes arriba: ubicación con o sin bono, bono del día, foco, tarifa, tipo de venta y Premium. Aviso cuando faltan precios.',
+      'Tocar un número abre el detalle con materiales, precio de venta y rentabilidad.'
+    ] },
     { v: '1.7', date: '2026-10-03', items: [
       'Nuevo: Pociones. Lista de pociones por tipo; al elegir una aparecen sus materiales para escribir el precio de cada uno.',
       'Calcula la rentabilidad: costo total y por poción, ingreso neto, ganancia, ROI y precio mínimo para no perder.',
