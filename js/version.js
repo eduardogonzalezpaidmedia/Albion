@@ -1,8 +1,12 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '2.1';
+  SM.VERSION = '2.2';
   SM.CHANGELOG = [
+    { v: '2.2', date: '2026-10-03', items: [
+      'Pociones: nueva sección «Conversión». 1 ingrediente raro T7 da 2 de T5 y 1 de T5 da 2 de T3 (cantidades editables).',
+      'Las pociones se calculan con el precio más barato entre comprar el ingrediente o convertirlo desde el tier superior. El detalle de cada poción indica cuándo se usó la conversión.'
+    ] },
     { v: '2.1', date: '2026-10-03', items: [
       'Pociones: nueva sección «Restos animales». Anotas el precio de cada ingrediente raro y ves cuánto te cuesta cada resto con cada uno.',
       'Rendimiento por tier editable (T3 = 5, T5 = 10, T7 = 25). Marca el más barato y lo compara con comprar los restos directo.'

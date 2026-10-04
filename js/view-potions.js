@@ -69,8 +69,9 @@
   function sub(k) {
     const u = U(); S.sub = k;
     u.$$('#poNav button').forEach(b => { if (b.dataset.sub === k) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
-    u.$('#poSubTable').hidden = k !== 'table'; u.$('#poSubMats').hidden = k !== 'mats'; u.$('#poSubRemains').hidden = k !== 'remains';
+    u.$('#poSubTable').hidden = k !== 'table'; u.$('#poSubMats').hidden = k !== 'mats'; u.$('#poSubRemains').hidden = k !== 'remains'; u.$('#poSubConv').hidden = k !== 'conv';
     if (k === 'remains') buildRemains();
+    if (k === 'conv') buildConv();
     if (k === 'mats') u.$$('#poMatGroups [data-mat]').forEach(i => { const v = store().mats[i.dataset.mat]; i.value = v || ''; });
     if (k === 'table') table();
     window.scrollTo({ top: 0 });
@@ -95,6 +96,7 @@
   function context(units) {
     const c = cfg(), p = store(), man = {};
     Object.entries(p.mats).forEach(([id, v]) => { if (v > 0) man[id] = { price: v }; });
+    Object.entries(convInfo()).forEach(([id, x]) => { if (x.price > 0) man[id] = { price: x.price }; });   // ingredientes raros: precio más barato entre comprar o convertir
     return SM.engine.context({ craftCity: c.city, focus: c.focus, premium: c.premium, dailyBonus: c.daily, bonusOverride: c.bonus === 'yes', units: units || 1, manualPrices: man,
       saleMode: c.mode, maxAgeH: null, buyLocations: [], sellMarkets: [], fee: { value: c.fee, mode: 'per_unit' }, transport: { legs: [], perUnit: 0 } });
   }
@@ -139,7 +141,7 @@
         <label class="field"><span class="lbl">Cantidad a fabricar</span><input id="pdUnits" type="number" min="1" inputmode="numeric" value="100"></label>
       </div><div id="pdOut"></div>`);
     const draw = () => {
-      const units = Math.max(1, +u.$('#pdUnits').value || 1), { e, ctx } = evalItem(it, units), c = e.calc, mode = cfg().mode;
+      const units = Math.max(1, +u.$('#pdUnits').value || 1), { e, ctx } = evalItem(it, units), c = e.calc, mode = cfg().mode, ci = convInfo();
       const be = c.totalCost !== null ? SM.invest.breakeven(c.totalCost / c.made, mode, ctx.taxPct, ctx.setupPct) : null;
       const miss = c.lines.filter(l => l.price === null).length, sale = store().sale[it.item_id];
       let v;
@@ -151,7 +153,7 @@
       const k = (l, val, s2, cls) => `<div class="kpi ${cls || ''}"><span class="lbl">${l}</span><b>${val}</b><span class="s">${s2 || ''}</span></div>`;
       u.$('#pdOut').innerHTML = `<div class="sp-verdict v-${v.cls}"><b>${v.t}</b><span>${v.d}</span></div>
         <div class="tablewrap"><table class="grid-table"><thead><tr><th>Material</th><th class="n">Comprar</th><th class="n">Precio</th><th class="n">Costo</th></tr></thead><tbody>
-        ${c.lines.map(l => `<tr><td>${u.esc(SM.crafting.label(l.item_id))}<br><span class="small muted">${l.perCraft} × ${c.crafts}${l.returnable ? ' · vuelven ' + u.fmtQ(l.recovered) : ' · no retorna'}</span></td><td class="n">${l.toBuy === null ? '—' : l.toBuy.toLocaleString('es-CL')}</td><td class="n">${l.price === null ? '<span class="warn">falta</span>' : u.fmt(l.price)}</td><td class="n">${l.cost === null ? '—' : u.fmt(l.cost)}</td></tr>`).join('')}</tbody></table></div>
+        ${c.lines.map(l => `<tr><td>${u.esc(SM.crafting.label(l.item_id))}<br><span class="small muted">${l.perCraft} × ${c.crafts}${l.returnable ? ' · vuelven ' + u.fmtQ(l.recovered) : ' · no retorna'}</span>${(ci[l.item_id] && ci[l.item_id].from) ? '<br><span class="small pos">convirtiendo desde T' + ci[l.item_id].from + '</span>' : ''}</td><td class="n">${l.toBuy === null ? '—' : l.toBuy.toLocaleString('es-CL')}</td><td class="n">${l.price === null ? '<span class="warn">falta</span>' : u.fmt(l.price)}</td><td class="n">${l.cost === null ? '—' : u.fmt(l.cost)}</td></tr>`).join('')}</tbody></table></div>
         <div class="kpis">
           ${k('Pociones que salen', c.made.toLocaleString('es-CL'), `${c.crafts} crafteo(s) × ${c.yieldN}`)}
           ${k('Costo total', u.fmt(c.totalCost), c.totalCost === null ? '' : `materiales ${u.fmt(c.materialCost)}${c.craftingFee ? ' + tarifa ' + u.fmt(c.craftingFee) : ''}`)}
@@ -287,6 +289,54 @@
     finally { btn.disabled = false; SM.app.busy(false); }
   }
 
+  /* ---------- conversión de ingredientes raros ----------
+     Según indicó la usuaria: 1 ingrediente T7 se convierte en 2 de T5, y 1 de T5 en 2 de T3 (cantidades editables).
+     En los cálculos de pociones cada ingrediente usa el precio más barato entre comprarlo directo o sacarlo del tier superior. */
+  const CKEY = 'ingredient-conv';
+  const conv = () => Object.assign({ on: true, r75: 2, r53: 2 }, SM.storage.get(CKEY, {}));
+  /** { item_id: { direct, price, from } } — price = lo que se usa; from = tier del que conviene convertir (o null). */
+  function convInfo() {
+    const c = conv(), p = store(), out = {};
+    rareRows().forEach(r => {
+      if (!(r.byTier[7] && r.byTier[5] && r.byTier[3])) return;          // Sangre de Dragón: no se indicó conversión
+      const d7 = p.mats[r.byTier[7]] || null, d5 = p.mats[r.byTier[5]] || null, d3 = p.mats[r.byTier[3]] || null;
+      const pick = (direct, alt, from) => { const use = c.on && alt !== null && (direct === null || alt < direct); return { direct, alt, price: use ? alt : direct, from: use ? from : null }; };
+      const e5 = pick(d5, d7 !== null && c.r75 > 0 ? d7 / c.r75 : null, 7);
+      const e3 = pick(d3, e5.price !== null && c.r53 > 0 ? e5.price / c.r53 : null, e5.from === 7 ? 7 : 5);
+      out[r.byTier[7]] = { direct: d7, alt: null, price: d7, from: null };
+      out[r.byTier[5]] = e5; out[r.byTier[3]] = e3;
+    });
+    return out;
+  }
+  function buildConv() {
+    const u = U(), c = conv(), p = store(), rows = rareRows().filter(r => r.byTier[7]);
+    u.$('#poConvOpts').innerHTML = `<div class="fields">
+      <label class="field"><span class="lbl">Usar en los cálculos</span><span class="check"><input id="cvOn" type="checkbox"${c.on ? ' checked' : ''}> Tomar el precio más barato (comprar o convertir)</span></label>
+      <label class="field"><span class="lbl">1 de T7 da … de T5</span><input id="cv75" type="number" min="0" step="any" inputmode="numeric" value="${c.r75}"></label>
+      <label class="field"><span class="lbl">1 de T5 da … de T3</span><input id="cv53" type="number" min="0" step="any" inputmode="numeric" value="${c.r53}"></label></div>`;
+    u.$('#poConvTable').innerHTML = `<div class="tablewrap"><table class="grid-table po-table cr-in po-rem"><thead><tr><th>Ingrediente</th><th class="n">T3</th><th class="n">T5</th><th class="n">T7</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td class="cr-name">${u.esc(r.label)}</td>${[3, 5, 7].map(t => `<td data-cv="${u.esc(r.byTier[t])}"><input type="number" min="0" inputmode="numeric" data-mat="${u.esc(r.byTier[t])}" value="${p.mats[r.byTier[t]] || ''}" placeholder="precio" aria-label="${u.esc(r.label)} T${t}"><span class="rem-c" data-c></span></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const saveC = () => { SM.storage.set(CKEY, { on: u.$('#cvOn').checked, r75: +u.$('#cv75').value || 0, r53: +u.$('#cv53').value || 0 }); convCalc(); };
+    u.$('#cvOn').addEventListener('change', saveC); u.$('#cv75').addEventListener('input', saveC); u.$('#cv53').addEventListener('input', saveC);
+    u.$$('#poConvTable [data-mat]').forEach(inp => inp.addEventListener('input', () => { const q = store(), v = +inp.value; if (v > 0) q.mats[inp.dataset.mat] = v; else delete q.mats[inp.dataset.mat]; save(q); convCalc(); }));
+    convCalc();
+  }
+  function convCalc() {
+    const u = U(), info = convInfo(), c = conv(); let n = 0, saved = [];
+    u.$$('#poConvTable [data-cv]').forEach(td => {
+      const x = info[td.dataset.cv], el = td.querySelector('[data-c]'); td.classList.remove('rem-best');
+      if (!x || x.alt === null || x.alt === undefined) { el.textContent = ''; return; }
+      const src = 'T' + (td.dataset.cv.match(/^T(\d)/)[1] === '5' ? 7 : 5);
+      if (x.from) { n++; td.classList.add('rem-best'); el.innerHTML = `<b>${u.fmtQ(x.alt)}</b> desde T${x.from}`; if (x.direct) saved.push({ id: td.dataset.cv, pct: (x.direct - x.alt) / x.direct * 100, from: x.from, alt: x.alt, direct: x.direct }); }
+      else { el.innerHTML = `${u.fmtQ(x.alt)} desde ${src}`; el.className = 'rem-c muted'; return; }
+      el.className = 'rem-c';
+    });
+    saved.sort((a, b) => b.pct - a.pct);
+    u.$('#poConvOut').innerHTML = !c.on ? '<p class="muted">La conversión está desactivada: las pociones se calculan solo con el precio de compra de cada ingrediente.</p>'
+      : n ? `<p><b>${n}</b> ingrediente(s) salen más baratos convirtiendo (marcados en verde). Las pociones ya se calculan con ese precio.</p>${saved.length ? `<ol class="miss-list rem-rank">${saved.map(x => `<li><span>${u.esc(SM.crafting.label(x.id))}</span><span><b class="pos">${u.fmtQ(x.alt)}</b> desde T${x.from} <span class="small muted">en vez de ${u.fmt(x.direct)} · ahorras ${u.pct(x.pct)}</span></span></li>`).join('')}</ol>` : ''}`
+        : '<p class="muted">Con los precios actuales ningún ingrediente sale más barato convirtiendo. Escribe los precios de T5 y T7 para comparar.</p>';
+  }
+
   SM.views = SM.views || {};
-  SM.views.potions = { init, families, materials, yields };
+  SM.views.potions = { init, families, materials, yields, convInfo };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 2.2 | 2026-10-03 | Pociones: conversión de ingredientes raros (T7 → 2 T5, T5 → 2 T3) considerada en los costos. |
 | 2.1 | 2026-10-03 | Pociones: costo de los restos de animales raros según cada ingrediente. |
 | 2.0 | 2026-10-03 | Menú por secciones con barra inferior e Inicio con accesos directos. |
 | 1.9 | 2026-10-03 | Fabricación: tabla tier × encantamiento para armas, armaduras, botas, etc., con precios de artefactos y materiales refinados. |
