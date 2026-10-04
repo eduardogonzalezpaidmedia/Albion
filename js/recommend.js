@@ -72,7 +72,7 @@
       if (!s.ops.includes(mode) || !craftItems.length) continue;
       const locs = mode === 'arbitrage' ? s.cities.concat(['Black Market']) : s.cities;
       const r = await SM.flipping.scan({ ids: craftItems.map(i => i.item_id).concat(refItems.map(i => i.item_id)), locations: locs, mode: mode === 'flip' ? 'same' : 'cross', saleMode: s.saleMode,
-        maxAgeH: s.maxAgeH, minProfit: 1, minRoi: 0, taxPct: t.taxPct, setupPct: t.setupPct, transportPerUnit: +SM.storage.prefs().transportPerUnit || 0, liquidityTop: 150, capital: 0 }, prog(OPS[mode]));
+        maxAgeH: s.maxAgeH, minProfit: 1, minRoi: 0, taxPct: t.taxPct, setupPct: t.setupPct, transportPerUnit: +SM.storage.prefs().transportPerUnit || 0, liquidityTop: 150, capital: 0, buyLocs: mode === 'arbitrage' && s.buyFrom ? s.buyFrom : null }, prog(OPS[mode]));
       r.rows.forEach(x => out.push(fromFlip(mode, x, r.idx, locs, s, t)));
     }
     return { cands: out, missing };

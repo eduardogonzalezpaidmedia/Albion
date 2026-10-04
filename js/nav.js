@@ -5,7 +5,7 @@
   const SM = root.SM = root.SM || {};
   const SECTIONS = [
     { key: 'make', label: 'Fabricar', icon: 'M4 20h16M6 20V10l6-6 6 6v10M10 20v-5h4v5', views: ['craft', 'potions', 'simple', 'calc'] },
-    { key: 'find', label: 'Buscar', icon: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', views: ['artifacts', 'bm', 'scanner', 'local', 'refine', 'flip', 'finder'] },
+    { key: 'find', label: 'Buscar', icon: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', views: ['invest', 'artifacts', 'bm', 'scanner', 'local', 'refine', 'flip', 'finder'] },
     { key: 'market', label: 'Mercado', icon: 'M4 19V5M4 19h16M8 15l3-4 3 2 5-7', views: ['global', 'history', 'routes'] },
     { key: 'money', label: 'Mi plata', icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v10M15 9.5c-.6-1-1.7-1.5-3-1.5-1.7 0-3 .9-3 2.2 0 3 6 1.400 6 4.300 0 1.300-1.300 2.200-3 2.200-1.400 0-2.600-.6-3.200-1.600', views: ['intel', 'journal', 'settings'] }
   ];
@@ -14,6 +14,7 @@
     potions: ['Pociones', 'Costo y rentabilidad de cada poción con tus precios.'],
     simple: ['Calculadora sencilla', '¿Conviene fabricar un objeto para el Mercado Negro?'],
     calc: ['Calculadora completa', 'Costo, ganancia y ROI de un objeto con todas las opciones.'],
+    invest: ['Inversión', 'Cuánto invertir y qué comprar para revender entre ciudades.'],
     artifacts: ['Artefactos', 'Objetos con artefacto para el Mercado Negro, con orden de compra.'],
     bm: ['Black Market', 'Qué fabricar para vender al Mercado Negro.'],
     scanner: ['Market Scanner', 'Escanea muchos objetos y ordena por ganancia o liquidez.'],

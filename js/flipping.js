@@ -51,6 +51,7 @@
       } else {
         for (const a of f.locations) {
           if (a === 'Black Market') continue;
+          if (f.buyLocs && !f.buyLocs.includes(a)) continue;      // solo comprar en estas ciudades
           const so = SM.market.sellOrder(SM.market.row(idx, id, a, 1));
           if (!so || !fresh(so.date)) continue;
           for (const b of f.locations) {

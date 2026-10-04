@@ -17,7 +17,7 @@
     U.$$('#tabs button').forEach(b => { if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (!inited[view]) {
       inited[view] = true;
-      const map = { calc: SM.views.calc, scanner: SM.views.scanner, bm: SM.views.bm, global: SM.views.global, routes: SM.views.routes, history: SM.views.history, finder: SM.views.finder, refine: SM.views.refine, flip: SM.views.flip, journal: SM.views.journal, local: SM.views.local, intel: SM.views.intel, simple: SM.views.simple, artifacts: SM.views.artifacts, potions: SM.views.potions, craft: SM.views.craft };
+      const map = { calc: SM.views.calc, scanner: SM.views.scanner, bm: SM.views.bm, global: SM.views.global, routes: SM.views.routes, history: SM.views.history, finder: SM.views.finder, refine: SM.views.refine, flip: SM.views.flip, journal: SM.views.journal, local: SM.views.local, intel: SM.views.intel, simple: SM.views.simple, artifacts: SM.views.artifacts, potions: SM.views.potions, craft: SM.views.craft, invest: SM.views.invest };
       if (map[view]) map[view].init();
       if (view === 'settings') renderSettings();
     }
@@ -223,7 +223,7 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') U.closeModal(); });
     if (SM.nav) SM.nav.init();
     const start = (location.hash || '').slice(1);
-    go(['home', 'calc', 'scanner', 'bm', 'global', 'routes', 'history', 'finder', 'settings', 'refine', 'flip', 'journal', 'local', 'intel', 'simple', 'artifacts', 'potions', 'craft'].includes(start) ? start : 'home');
+    go(['home', 'calc', 'scanner', 'bm', 'global', 'routes', 'history', 'finder', 'settings', 'refine', 'flip', 'journal', 'local', 'intel', 'simple', 'artifacts', 'potions', 'craft', 'invest'].includes(start) ? start : 'home');
     SM.api.probe(SM.crafting.marketLocations());
   }
 

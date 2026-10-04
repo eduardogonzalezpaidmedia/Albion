@@ -389,3 +389,33 @@ td.rem-best .rem-c b{color:var(--pos)}
 .ts{display:none}
 @media (max-width:700px){ .tl{display:none} .ts{display:inline} }
 @media (max-width:700px){ .fam-id{align-items:center} }
+/* v2.4 — calculadora de inversión */
+.iv-top{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (min-width:900px){.iv-top{grid-template-columns:1.3fr 1fr 1fr 1fr}}
+.iv-top>.field:first-child{grid-column:1/-1}
+@media (min-width:900px){.iv-top>.field:first-child{grid-column:auto}}
+#ivAmount{font:600 20px var(--mono)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);border-radius:9px;overflow:hidden}
+.seg button{background:var(--bg2);border:0;color:var(--muted);font:600 14px var(--display);padding:10px 6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--bg)}
+.iv-more{margin-top:12px}
+.iv-more summary{cursor:pointer;color:var(--gold);padding:6px 0;font-weight:600}
+.iv-more .fields{margin-top:8px}
+.iv-list{display:grid;gap:10px;margin-top:12px}
+.iv-row{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
+.iv-it{display:flex;gap:10px;align-items:center}
+.iv-it .it-ico{width:44px;height:44px;flex:none}
+.iv-it div{display:grid;gap:1px;min-width:0}
+.iv-route{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 8px;align-items:baseline;font-size:14px}
+.iv-route .lbl,.iv-nums .lbl{font:600 10.5px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.iv-nums{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.iv-nums div{display:grid;gap:1px}
+.iv-nums b{font:500 15px var(--mono)}
+.iv-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.iv-foot .small{flex:1;min-width:140px}
+@media (min-width:900px){
+  .iv-row{grid-template-columns:230px 190px minmax(0,1fr);align-items:center}
+  .iv-route{grid-template-columns:auto 1fr}
+  .iv-nums{grid-template-columns:repeat(4,1fr)}
+  .iv-foot{grid-column:1/-1;border-top:1px solid var(--line);padding-top:8px}
+}

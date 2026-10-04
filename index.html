@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="2.3">
+<html lang="es" data-version="2.4">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.3">
+<link rel="stylesheet" href="css/style.css?v=2.4">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.3</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.4</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -29,6 +29,7 @@
   <button data-view="home" aria-current="page">Inicio</button>
   <button data-view="intel">Market Intelligence</button>
   <button data-view="simple">Calculadora sencilla</button>
+  <button data-view="invest">Inversión</button>
   <button data-view="artifacts">Artefactos</button>
   <button data-view="craft">Fabricación</button>
   <button data-view="potions">Pociones</button>
@@ -251,6 +252,21 @@
     </div>
   </section>
 
+  <!-- CALCULADORA DE INVERSIÓN -->
+  <section class="view" id="view-invest" hidden>
+    <section class="panel">
+      <div class="ph"><h2>Calculadora de inversión</h2><span class="muted small">Dime cuánto quieres invertir y armo una lista de compras para revender.</span></div>
+      <div id="ivForm"></div>
+      <div class="go"><button class="cta" id="ivGo">Buscar oportunidades</button><div class="status"><div class="prog"><span id="ivBar"></span></div><p class="msg" id="ivMsg"></p></div></div>
+    </section>
+    <section class="panel" id="ivRes" hidden>
+      <div class="ph"><h2>Resumen estimado</h2><label class="field inline"><span class="lbl">Ordenar por</span><select id="ivSort"><option value="total">Ganancia total</option><option value="margin">Margen</option><option value="cost">Costo</option><option value="fast">Venta más rápida</option><option value="risk">Menor riesgo</option></select></label></div>
+      <div id="ivSum"></div>
+      <p class="hint">La cantidad de cada objeto se limita a lo que registró Albion Data que se vende en el plazo (y tu parte del mercado), no a un número fijo. Ganancia después del impuesto de venta y de publicación. No incluye transporte salvo el que tengas en Ajustes. Es una estimación: confirma los precios en el juego antes de comprar.</p>
+      <div id="ivList" class="iv-list"></div>
+    </section>
+  </section>
+
   <!-- ARTEFACTOS -->
   <section class="view" id="view-artifacts" hidden>
     <section class="panel">
@@ -396,41 +412,42 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=2.3"></script>
-<script src="js/storage.js?v=2.3"></script>
-<script src="js/api.js?v=2.3"></script>
-<script src="js/crafting.js?v=2.3"></script>
-<script src="js/returnRate.js?v=2.3"></script>
-<script src="js/market.js?v=2.3"></script>
-<script src="js/profit.js?v=2.3"></script>
-<script src="js/demand.js?v=2.3"></script>
-<script src="js/risk.js?v=2.3"></script>
-<script src="js/forecast.js?v=2.3"></script>
-<script src="js/invest.js?v=2.3"></script>
-<script src="js/scanner.js?v=2.3"></script>
-<script src="js/chain.js?v=2.3"></script>
-<script src="js/flipping.js?v=2.3"></script>
-<script src="js/journal.js?v=2.3"></script>
-<script src="js/snapshots.js?v=2.3"></script>
-<script src="js/recommend.js?v=2.3"></script>
-<script src="js/assistant.js?v=2.3"></script>
-<script src="js/routes.js?v=2.3"></script>
-<script src="js/history.js?v=2.3"></script>
-<script src="js/finder.js?v=2.3"></script>
-<script src="js/alerts.js?v=2.3"></script>
-<script src="js/export.js?v=2.3"></script>
-<script src="js/ui.js?v=2.3"></script>
-<script src="js/nav.js?v=2.3"></script>
-<script src="js/view-calculator.js?v=2.3"></script>
-<script src="js/view-market.js?v=2.3"></script>
-<script src="js/view-routes.js?v=2.3"></script>
-<script src="js/view-extra.js?v=2.3"></script>
-<script src="js/view-intel.js?v=2.3"></script>
-<script src="js/view-simple.js?v=2.3"></script>
-<script src="js/artifacts.js?v=2.3"></script>
-<script src="js/view-artifacts.js?v=2.3"></script>
-<script src="js/view-potions.js?v=2.3"></script>
-<script src="js/view-craft.js?v=2.3"></script>
-<script src="js/app.js?v=2.3"></script>
+<script src="js/version.js?v=2.4"></script>
+<script src="js/storage.js?v=2.4"></script>
+<script src="js/api.js?v=2.4"></script>
+<script src="js/crafting.js?v=2.4"></script>
+<script src="js/returnRate.js?v=2.4"></script>
+<script src="js/market.js?v=2.4"></script>
+<script src="js/profit.js?v=2.4"></script>
+<script src="js/demand.js?v=2.4"></script>
+<script src="js/risk.js?v=2.4"></script>
+<script src="js/forecast.js?v=2.4"></script>
+<script src="js/invest.js?v=2.4"></script>
+<script src="js/scanner.js?v=2.4"></script>
+<script src="js/chain.js?v=2.4"></script>
+<script src="js/flipping.js?v=2.4"></script>
+<script src="js/journal.js?v=2.4"></script>
+<script src="js/snapshots.js?v=2.4"></script>
+<script src="js/recommend.js?v=2.4"></script>
+<script src="js/assistant.js?v=2.4"></script>
+<script src="js/routes.js?v=2.4"></script>
+<script src="js/history.js?v=2.4"></script>
+<script src="js/finder.js?v=2.4"></script>
+<script src="js/alerts.js?v=2.4"></script>
+<script src="js/export.js?v=2.4"></script>
+<script src="js/ui.js?v=2.4"></script>
+<script src="js/nav.js?v=2.4"></script>
+<script src="js/view-calculator.js?v=2.4"></script>
+<script src="js/view-market.js?v=2.4"></script>
+<script src="js/view-routes.js?v=2.4"></script>
+<script src="js/view-extra.js?v=2.4"></script>
+<script src="js/view-intel.js?v=2.4"></script>
+<script src="js/view-invest.js?v=2.4"></script>
+<script src="js/view-simple.js?v=2.4"></script>
+<script src="js/artifacts.js?v=2.4"></script>
+<script src="js/view-artifacts.js?v=2.4"></script>
+<script src="js/view-potions.js?v=2.4"></script>
+<script src="js/view-craft.js?v=2.4"></script>
+<script src="js/app.js?v=2.4"></script>
 </body>
 </html>

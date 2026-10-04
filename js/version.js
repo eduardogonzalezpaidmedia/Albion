@@ -1,8 +1,14 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '2.3';
+  SM.VERSION = '2.4';
   SM.CHANGELOG = [
+    { v: '2.4', date: '2026-10-04', items: [
+      'Nuevo: Calculadora de inversión (Buscar → Inversión). Escribes cuánto quieres invertir, la ciudad de compra y el tipo de venta, y arma una lista de compras para revender entre ciudades.',
+      'Resumen arriba: invertido, ganancia estimada, retorno y plata sin usar. Nunca supera el monto que escribiste.',
+      'Cada fila: dónde comprar y vender, cantidad, costo, ganancia, margen, ventas por día, riesgo y antigüedad del precio. La cantidad se limita por lo que se vende en el plazo.',
+      'Cambiar monto, plazo o riesgo recalcula al instante sin volver a consultar precios.'
+    ] },
     { v: '2.3', date: '2026-10-04', items: [
       'Fabricación y Pociones con diseño nuevo: cada objeto muestra su ícono y nombre a la izquierda y su tabla de tiers y encantamientos a la derecha.',
       'Fabricación: en pantallas grandes, menú lateral con todas las categorías agrupadas (armas, secundarias, placas, cuero, tela, accesorios). En el teléfono se mantiene el selector.',
