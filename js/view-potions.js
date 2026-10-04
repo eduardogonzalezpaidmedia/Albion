@@ -124,8 +124,9 @@
       } else if (sale) subl = `<i class="${c.profit > 0 ? 'pos' : 'neg'}">${c.profit > 0 ? '+' : ''}${u.fmt(c.profitPerUnit)}</i>`;
       return `<td class="n po-cell ${cls}" data-it="${u.esc(it.item_id)}"><b>${main}</b>${subl}</td>`;
     };
-    const html = fams.map(f => `<tbody><tr class="po-fh"><th colspan="5">${u.esc(f.label)}</th></tr>${f.tiers.map(t => `<tr><td class="po-t">T${t}<span class="small muted"> ${u.esc(f.items.find(i => i.tier === t).name.replace(f.label, '').trim())}</span></td>${[0, 1, 2, 3].map(en => cell(f.items.find(i => i.tier === t && i.enchantment === en))).join('')}</tr>`).join('')}</tbody>`).join('');
-    u.$('#poTable').innerHTML = `<div class="tablewrap"><table class="grid-table po-table"><thead><tr><th>Tier</th><th class="n">.0</th><th class="n">.1</th><th class="n">.2</th><th class="n">.3</th></tr></thead>${html}</table></div>`;
+    u.$('#poTable').innerHTML = `<div class="fam-head"><span>Poción</span><div class="fam-cols c4"><span>Tier</span>${[0, 1, 2, 3].map(e => `<span class="n">.${e}</span>`).join('')}</div></div>` +
+      fams.map(f => `<div class="fam"><div class="fam-id">${SM.ui.icon(f.items[f.items.length - 1].item_id.split('@')[0])}<b>${u.esc(f.label)}</b></div>
+        <table class="po-table fam-t c4"><tbody>${f.tiers.map(t => `<tr><td class="po-t"><span class="tl">Tier </span><span class="ts">T</span>${t}</td>${[0, 1, 2, 3].map(en => cell(f.items.find(i => i.tier === t && i.enchantment === en))).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
     u.$('#poSummary').innerHTML = `${n} recetas · retorno efectivo: <b class="silver">${rate === null ? '—' : u.pct(rate * 100)}</b> · ${S.show === 'cost' ? 'costo por poción' : S.show === 'profit' ? 'ganancia por poción' : 'ROI'}`;
     const mb = u.$('#poMissing');
     mb.hidden = !missing.size;

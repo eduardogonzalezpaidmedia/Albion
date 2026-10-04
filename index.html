@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-version="2.2">
+<html lang="es" data-version="2.3">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -10,7 +10,7 @@
 <link rel="icon" href="assets/icons/silver-master.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="css/style.css?v=2.2">
+<link rel="stylesheet" href="css/style.css?v=2.3">
 </head>
 <body>
 <header class="topbar">
@@ -20,7 +20,7 @@
   </div>
   <div class="top-actions">
     <label class="srv"><span class="sr">Servidor</span><select id="serverSel" aria-label="Servidor"></select></label>
-    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.2</button>
+    <button class="ver" id="verBadge" type="button" title="Versión que está corriendo">v2.3</button>
     <button class="api-pill" id="apiPill" type="button" title="Estado de la conexión con Albion Online Data Project"><span class="dot"></span><span id="apiTxt">API · comprobando</span></button>
   </div>
 </header>
@@ -177,8 +177,10 @@
       <div class="ph"><h2>Fabricación</h2><span class="muted small" id="crSummary"></span></div>
       <nav class="isubnav" id="crNav" aria-label="Secciones de fabricación"><button type="button" data-sub="table">Objetos</button><button type="button" data-sub="mats">Precios de materiales</button><button type="button" data-sub="conv">Conversión</button><button type="button" data-sub="remains">Restos animales</button></nav>
     </section>
-    <div id="crSubTable">
-      <section class="panel"><label class="field"><span class="lbl">Categoría</span><select id="crCat"></select></label><div id="crSettings" style="margin-top:12px"></div></section>
+    <div id="crSubTable" class="with-side">
+      <aside class="side panel" id="crSide" aria-label="Categorías"></aside>
+      <div class="side-main">
+      <section class="panel"><label class="field cat-sel"><span class="lbl">Categoría</span><select id="crCat"></select></label><div id="crSettings" style="margin-top:12px"></div></section>
       <div class="banner" id="crMissing" hidden></div>
       <section class="panel" id="crExtraBox" hidden><div class="ph"><h2>Precios de artefactos</h2><div class="btns"><button class="btn" id="crLoadExtra">Rellenar vacíos con precios en línea</button></div></div>
         <p class="hint">Artefactos, sellos y otros materiales especiales de esta categoría: lo que pagas por unidad. Cuando un objeto usa otro objeto como material (los reales usan el objeto base), se toma lo que cuesta fabricarlo.</p><div id="crExtra"></div></section>
@@ -188,6 +190,7 @@
         <p class="hint">Toca cualquier número para ver los materiales, anotar tu precio de venta y la rentabilidad.</p>
         <div id="crTable"></div>
       </section>
+      </div>
     </div>
     <div id="crSubMats" hidden>
       <section class="panel">
@@ -393,41 +396,41 @@
 </div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="js/version.js?v=2.2"></script>
-<script src="js/storage.js?v=2.2"></script>
-<script src="js/api.js?v=2.2"></script>
-<script src="js/crafting.js?v=2.2"></script>
-<script src="js/returnRate.js?v=2.2"></script>
-<script src="js/market.js?v=2.2"></script>
-<script src="js/profit.js?v=2.2"></script>
-<script src="js/demand.js?v=2.2"></script>
-<script src="js/risk.js?v=2.2"></script>
-<script src="js/forecast.js?v=2.2"></script>
-<script src="js/invest.js?v=2.2"></script>
-<script src="js/scanner.js?v=2.2"></script>
-<script src="js/chain.js?v=2.2"></script>
-<script src="js/flipping.js?v=2.2"></script>
-<script src="js/journal.js?v=2.2"></script>
-<script src="js/snapshots.js?v=2.2"></script>
-<script src="js/recommend.js?v=2.2"></script>
-<script src="js/assistant.js?v=2.2"></script>
-<script src="js/routes.js?v=2.2"></script>
-<script src="js/history.js?v=2.2"></script>
-<script src="js/finder.js?v=2.2"></script>
-<script src="js/alerts.js?v=2.2"></script>
-<script src="js/export.js?v=2.2"></script>
-<script src="js/ui.js?v=2.2"></script>
-<script src="js/nav.js?v=2.2"></script>
-<script src="js/view-calculator.js?v=2.2"></script>
-<script src="js/view-market.js?v=2.2"></script>
-<script src="js/view-routes.js?v=2.2"></script>
-<script src="js/view-extra.js?v=2.2"></script>
-<script src="js/view-intel.js?v=2.2"></script>
-<script src="js/view-simple.js?v=2.2"></script>
-<script src="js/artifacts.js?v=2.2"></script>
-<script src="js/view-artifacts.js?v=2.2"></script>
-<script src="js/view-potions.js?v=2.2"></script>
-<script src="js/view-craft.js?v=2.2"></script>
-<script src="js/app.js?v=2.2"></script>
+<script src="js/version.js?v=2.3"></script>
+<script src="js/storage.js?v=2.3"></script>
+<script src="js/api.js?v=2.3"></script>
+<script src="js/crafting.js?v=2.3"></script>
+<script src="js/returnRate.js?v=2.3"></script>
+<script src="js/market.js?v=2.3"></script>
+<script src="js/profit.js?v=2.3"></script>
+<script src="js/demand.js?v=2.3"></script>
+<script src="js/risk.js?v=2.3"></script>
+<script src="js/forecast.js?v=2.3"></script>
+<script src="js/invest.js?v=2.3"></script>
+<script src="js/scanner.js?v=2.3"></script>
+<script src="js/chain.js?v=2.3"></script>
+<script src="js/flipping.js?v=2.3"></script>
+<script src="js/journal.js?v=2.3"></script>
+<script src="js/snapshots.js?v=2.3"></script>
+<script src="js/recommend.js?v=2.3"></script>
+<script src="js/assistant.js?v=2.3"></script>
+<script src="js/routes.js?v=2.3"></script>
+<script src="js/history.js?v=2.3"></script>
+<script src="js/finder.js?v=2.3"></script>
+<script src="js/alerts.js?v=2.3"></script>
+<script src="js/export.js?v=2.3"></script>
+<script src="js/ui.js?v=2.3"></script>
+<script src="js/nav.js?v=2.3"></script>
+<script src="js/view-calculator.js?v=2.3"></script>
+<script src="js/view-market.js?v=2.3"></script>
+<script src="js/view-routes.js?v=2.3"></script>
+<script src="js/view-extra.js?v=2.3"></script>
+<script src="js/view-intel.js?v=2.3"></script>
+<script src="js/view-simple.js?v=2.3"></script>
+<script src="js/artifacts.js?v=2.3"></script>
+<script src="js/view-artifacts.js?v=2.3"></script>
+<script src="js/view-potions.js?v=2.3"></script>
+<script src="js/view-craft.js?v=2.3"></script>
+<script src="js/app.js?v=2.3"></script>
 </body>
 </html>

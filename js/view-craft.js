@@ -62,7 +62,10 @@
     S.cat = c.cat;
     u.$('#crNav').onclick = e => { const b = e.target.closest('[data-sub]'); if (b) sub(b.dataset.sub); };
     u.$('#crCat').innerHTML = CATS.map(g => `<optgroup label="${u.esc(g.label)}">${g.subs.map(([v, l]) => `<option value="${v}"${v === S.cat ? ' selected' : ''}>${u.esc(l)}</option>`).join('')}</optgroup>`).join('');
-    u.$('#crCat').onchange = () => { S.cat = u.$('#crCat').value; setCfg({ cat: S.cat }); S.loaded = false; table(); };
+    const pickCat = v => { S.cat = v; setCfg({ cat: v }); S.loaded = false; u.$('#crCat').value = v; u.$$('#crSide [data-cat]').forEach(b => { if (b.dataset.cat === v) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }); table(); };
+    u.$('#crCat').onchange = () => pickCat(u.$('#crCat').value);
+    u.$('#crSide').innerHTML = CATS.map(g => `<div class="side-g"><h3>${u.esc(g.label)}</h3>${g.subs.map(([v, l]) => `<button type="button" data-cat="${v}"${v === S.cat ? ' aria-current="page"' : ''}>${u.esc(l)}</button>`).join('')}</div>`).join('');
+    u.$('#crSide').onclick = e => { const b = e.target.closest('[data-cat]'); if (b) { pickCat(b.dataset.cat); window.scrollTo({ top: 0 }); } };
     buildSettings(); buildRefined();
     u.$('#crShow').onchange = () => { S.show = u.$('#crShow').value; table(); };
     u.$('#crMissing').onclick = e => { if (e.target.closest('a')) { e.preventDefault(); sub('mats'); } };
@@ -117,8 +120,10 @@
     u.$('#crExtraBox').hidden = !ex.length;
     u.$('#crExtra').innerHTML = ex.length ? `<div class="tablewrap"><table class="grid-table po-table cr-in"><thead><tr><th>Material</th>${tiers.map(t => `<th class="n">${t ? 'T' + t : 'Precio'}</th>`).join('')}</tr></thead><tbody>${ex.map(r => `<tr><td class="cr-name">${u.esc(r.label)}</td>${tiers.map(t => r.byTier[t] ? `<td><input type="number" min="0" inputmode="numeric" data-mat="${u.esc(r.byTier[t])}" value="${p.mats[r.byTier[t]] || ''}" placeholder="0" aria-label="${u.esc(r.label)} T${t}"></td>` : '<td></td>').join('')}</tr>`).join('')}</tbody></table></div>` : '';
     u.$$('#crExtra [data-mat]').forEach(inp => inp.addEventListener('input', () => { const q = store(), v = +inp.value; if (v > 0) q.mats[inp.dataset.mat] = v; else delete q.mats[inp.dataset.mat]; save(q); cells(); }));
-    const html = fams.map(f => `<tbody><tr class="po-fh"><th colspan="6">${u.esc(f.label)}</th></tr>${f.tiers.map(t => `<tr><td class="po-t">T${t}</td>${[0, 1, 2, 3, 4].map(en => { const it = f.items.find(i => i.tier === t && i.enchantment === en); return it ? `<td class="n po-cell" data-it="${u.esc(it.item_id)}"></td>` : '<td class="n muted">·</td>'; }).join('')}</tr>`).join('')}</tbody>`).join('');
-    u.$('#crTable').innerHTML = `<div class="tablewrap"><table class="grid-table po-table cr-table"><thead><tr><th>Tier</th>${[0, 1, 2, 3, 4].map(e => `<th class="n">.${e}</th>`).join('')}</tr></thead>${html}</table></div>`;
+    const top = f => f.items[f.items.length - 1];
+    u.$('#crTable').innerHTML = `<div class="fam-head"><span>Objeto</span><div class="fam-cols"><span>Tier</span>${[0, 1, 2, 3, 4].map(e => `<span class="n">.${e}</span>`).join('')}</div></div>` +
+      fams.map(f => `<div class="fam"><div class="fam-id">${SM.ui.icon(top(f).item_id.split('@')[0])}<b>${u.esc(f.label)}</b></div>
+        <table class="po-table fam-t"><tbody>${f.tiers.map(t => `<tr><td class="po-t"><span class="tl">Tier </span><span class="ts">T</span>${t}</td>${[0, 1, 2, 3, 4].map(en => { const it = f.items.find(i => i.tier === t && i.enchantment === en); return it ? `<td class="n po-cell" data-it="${u.esc(it.item_id)}"></td>` : '<td class="n muted">–</td>'; }).join('')}</tr>`).join('')}</tbody></table></div>`).join('');
     u.$$('#crTable .po-cell').forEach(td => td.onclick = () => detail(SM.crafting.item(td.dataset.it)));
     cells();
   }

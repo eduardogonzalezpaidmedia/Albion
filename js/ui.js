@@ -135,5 +135,8 @@
 
   const catOptions = () => Object.entries(SM.crafting.CATEGORY_LABEL).map(([value, label]) => ({ value, label }));
 
-  SM.ui = { $, $$, esc, fmt, fmtQ, pct, signCls, ageBadge, ageBadgeMin, confBadge, toast, modal, closeModal, table, itemPicker, options, chips, calcLog, catOptions, isNum };
+  /** Ícono del objeto desde el servicio oficial de imágenes de Albion Online. Si no carga, se oculta solo. */
+  const icon = (id, size) => `<img class="it-ico" loading="lazy" alt="" width="${size || 72}" height="${size || 72}" src="https://render.albiononline.com/v1/item/${encodeURIComponent(id)}.png?size=128" onerror="this.style.display='none'">`;
+
+  SM.ui = { icon, $, $$, esc, fmt, fmtQ, pct, signCls, ageBadge, ageBadgeMin, confBadge, toast, modal, closeModal, table, itemPicker, options, chips, calcLog, catOptions, isNum };
 })(typeof window !== 'undefined' ? window : globalThis);

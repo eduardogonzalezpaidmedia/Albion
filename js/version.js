@@ -1,8 +1,13 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '2.2';
+  SM.VERSION = '2.3';
   SM.CHANGELOG = [
+    { v: '2.3', date: '2026-10-04', items: [
+      'Fabricación y Pociones con diseño nuevo: cada objeto muestra su ícono y nombre a la izquierda y su tabla de tiers y encantamientos a la derecha.',
+      'Fabricación: en pantallas grandes, menú lateral con todas las categorías agrupadas (armas, secundarias, placas, cuero, tela, accesorios). En el teléfono se mantiene el selector.',
+      'Los íconos vienen del servicio oficial de imágenes de Albion Online.'
+    ] },
     { v: '2.2', date: '2026-10-03', items: [
       'Pociones: nueva sección «Conversión». 1 ingrediente raro T7 da 2 de T5 y 1 de T5 da 2 de T3 (cantidades editables).',
       'Las pociones se calculan con el precio más barato entre comprar el ingrediente o convertirlo desde el tier superior. El detalle de cada poción indica cuándo se usó la conversión.'

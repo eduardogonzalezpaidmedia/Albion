@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 2.3 | 2026-10-04 | Fabricación y Pociones: íconos, bloque por objeto y menú lateral de categorías. |
 | 2.2 | 2026-10-03 | Pociones: conversión de ingredientes raros (T7 → 2 T5, T5 → 2 T3) considerada en los costos. |
 | 2.1 | 2026-10-03 | Pociones: costo de los restos de animales raros según cada ingrediente. |
 | 2.0 | 2026-10-03 | Menú por secciones con barra inferior e Inicio con accesos directos. |
