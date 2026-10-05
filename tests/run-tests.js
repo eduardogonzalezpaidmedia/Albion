@@ -3,7 +3,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 const mem = {}; const localStorage = { getItem: k => k in mem ? mem[k] : null, setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
 const ctx = { console, Math, Date, JSON, isFinite, Number, String, Object, Array, Set, Map, Promise, setTimeout, localStorage };
 ctx.globalThis = ctx; vm.createContext(ctx);
-for (const f of ['../js/storage.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/risk.js', '../js/forecast.js', '../js/invest.js', '../js/flipping.js', '../js/journal.js', '../js/snapshots.js', '../js/artifacts.js', './fixtures.demo.js'])
+for (const f of ['../js/storage.js', '../js/api.js', '../js/profit.js', '../js/returnRate.js', '../js/market.js', '../js/demand.js', '../js/risk.js', '../js/forecast.js', '../js/invest.js', '../js/flipping.js', '../js/journal.js', '../js/snapshots.js', '../js/artifacts.js', './fixtures.demo.js'])
   vm.runInContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), ctx, { filename: f });
 const { SM, SM_DEMO: DEMO } = ctx;
 const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/settings.json'), 'utf8'));
@@ -195,6 +195,17 @@ t('ahorro frente a compra directa más barata (950)', Math.abs(bp.saving - (950 
 const aidx2 = SM.market.index([{ item_id: 'ART2', city: 'A', quality: 1, sell_price_min: 500, sell_price_min_date: now, buy_price_max: 499, buy_price_max_date: now }]);
 t('si la orden sale más cara que comprar directo, compra directo', SM.artifacts.buyPlan(aidx2, 'ART2', ['A'], 24, 2.5, 1).useOrder === false);
 t('sin precios → sin plan', SM.artifacts.buyPlan({}, 'X', ['A'], 24, 2.5, 1).price === null);
+
+
+console.log('Base privada · mezcla con datos públicos (DEMO)');
+const pub = [{ item_id: 'A', city: 'Lymhurst', quality: 1, sell_price_min: 100, sell_price_min_date: '2026-10-05T10:00:00', buy_price_max: 80, buy_price_max_date: '2026-10-05T12:00:00' }];
+const mine = [{ item_id: 'A', city: 'Lymhurst', quality: 1, sell_price_min: 95, sell_price_min_date: '2026-10-05T11:00:00', buy_price_max: 70, buy_price_max_date: '2026-10-05T09:00:00', own_sell_orders: 4 },
+  { item_id: 'B', city: 'Martlock', quality: 1, sell_price_min: 500, sell_price_min_date: '2026-10-05T11:00:00', buy_price_max: 0, buy_price_max_date: '0001-01-01T00:00:00' }];
+const mg = SM.api.mergeOwn(pub.map(r => Object.assign({}, r)), mine);
+t('usa tu precio de venta porque es más reciente', mg[0].sell_price_min === 95 && mg[0].own_sell === true);
+t('mantiene el público de compra porque es más reciente', mg[0].buy_price_max === 80 && !mg[0].own_buy);
+t('agrega lo que solo tienes tú', mg.length === 2 && mg[1].item_id === 'B' && mg[1].own_sell === true);
+t('sin base privada no cambia nada', SM.api.mergeOwn(pub, []).length === 1);
 
 console.log('\n' + pass + ' pruebas correctas, ' + fail + ' fallidas');
 process.exit(fail ? 1 : 0);

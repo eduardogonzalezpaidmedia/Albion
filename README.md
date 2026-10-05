@@ -221,6 +221,7 @@ La versión aparece arriba a la derecha (toca el número para ver los cambios). 
 
 | Versión | Fecha | Cambios |
 |---|---|---|
+| 2.5 | 2026-10-05 | Base de datos privada opcional (Cloudflare Worker + D1) alimentada por el Albion Data Client. |
 | 2.4 | 2026-10-04 | Calculadora de inversión: lista de compras para revender entre ciudades según el monto. |
 | 2.3 | 2026-10-04 | Fabricación y Pociones: íconos, bloque por objeto y menú lateral de categorías. |
 | 2.2 | 2026-10-03 | Pociones: conversión de ingredientes raros (T7 → 2 T5, T5 → 2 T3) considerada en los costos. |

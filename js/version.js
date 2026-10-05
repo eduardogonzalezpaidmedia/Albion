@@ -1,8 +1,14 @@
 /* Silver Master — versión de la app. Cambiar aquí, en <html data-version> y en los ?v= de index.html en cada actualización. */
 (function (root) {
   const SM = root.SM = root.SM || {};
-  SM.VERSION = '2.4';
+  SM.VERSION = '2.5';
   SM.CHANGELOG = [
+    { v: '2.5', date: '2026-10-05', items: [
+      'Nuevo: base de datos privada (opcional). Tus propios precios, capturados en tu PC con el Albion Data Client y guardados en tu Cloudflare con clave.',
+      'En Ajustes: dirección y clave de la base privada, con botón para probarla. Si está configurada, la app usa tu precio cuando es más reciente que el público.',
+      'Si la base privada no responde, la app sigue funcionando con los datos públicos.',
+      'Instrucciones paso a paso en worker/BASE-PRIVADA.md.'
+    ] },
     { v: '2.4', date: '2026-10-04', items: [
       'Nuevo: Calculadora de inversión (Buscar → Inversión). Escribes cuánto quieres invertir, la ciudad de compra y el tipo de venta, y arma una lista de compras para revender entre ciudades.',
       'Resumen arriba: invertido, ganancia estimada, retorno y plata sin usar. Nunca supera el monto que escribiste.',

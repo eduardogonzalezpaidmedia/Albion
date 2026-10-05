@@ -8,7 +8,7 @@
   function applyApiConfig() {
     const P = SM.storage.profile(), F = SM.storage.prefs(), S = SM.data.settings;
     const srv = S.servers[P.server] || S.servers.americas;
-    SM.api.configure({ serverKey: P.server, host: srv.host, proxyUrl: F.proxyUrl || '', cacheMinutes: F.cacheMinutes ?? S.cache_minutes });
+    SM.api.configure({ serverKey: P.server, host: srv.host, proxyUrl: F.proxyUrl || '', cacheMinutes: F.cacheMinutes ?? S.cache_minutes, privateUrl: F.privateUrl || '', privateKey: F.privateKey || '' });
   }
 
   function go(view, noScroll) {
@@ -131,6 +131,8 @@
         <label class="field"><span class="lbl">Precios de máximo (horas) en escáneres</span><input id="sAge" type="number" min="1" value="${F.maxAgeHours}"></label>
         <label class="field"><span class="lbl">Caché (minutos)</span><input id="sCache" type="number" min="0" placeholder="${S.cache_minutes}" value="${F.cacheMinutes ?? ''}"></label>
         <label class="field" style="grid-column:span 2"><span class="lbl">Proxy (Cloudflare Worker)</span><input id="sProxy" type="url" placeholder="https://tu-worker.workers.dev" value="${U.esc(F.proxyUrl)}"><span class="hint">Vacío = consulta AODP directo. Ver worker/ y README.</span></label>
+        <label class="field" style="grid-column:span 2"><span class="lbl">Base privada · dirección</span><input id="sPrivUrl" type="url" placeholder="https://mi-base.usuario.workers.dev" value="${U.esc(F.privateUrl || '')}"><span class="hint">Tus propios precios capturados en tu PC. Ver worker/BASE-PRIVADA.md.</span></label>
+        <label class="field" style="grid-column:span 2"><span class="lbl">Base privada · clave</span><input id="sPrivKey" type="password" autocomplete="off" placeholder="la clave que inventaste" value="${U.esc(F.privateKey || '')}"><span class="hint">Se guarda solo en este dispositivo. <button type="button" class="btn sm" id="sPrivTest">Probar base privada</button></span><span class="hint" id="sPrivOut"></span></label>
         <label class="field"><span class="lbl">Moneda</span><select disabled><option>Plata (silver)</option></select></label>
         <label class="field"><span class="lbl">Idioma</span><select disabled><option>Español</option></select></label>
       </div>
@@ -159,7 +161,7 @@
     U.$('#sSave').onclick = () => {
       const p = SM.storage.profile(), f = SM.storage.prefs();
       Object.assign(p, { server: U.$('#sServer').value, city: U.$('#sCity').value, premium: U.$('#sPrem').value === '1', focus: U.$('#sFocus').value === '1', focusAvailable: +U.$('#sFocusAv').value || 0, ownSpec: Math.min(100, +U.$('#sSpec').value || 0), mastery: Math.min(100, +U.$('#sMast').value || 0), otherSpecsSum: +U.$('#sOther').value || 0, capital: +U.$('#sCap').value || 0, hours: +U.$('#sHours').value || 0, risk: U.$('#sRisk').value });
-      Object.assign(f, { taxPremiumPct: num('sTaxP'), taxNoPremiumPct: num('sTaxN'), setupFeePct: num('sSetup'), craftingFee: +U.$('#sFee').value || 0, transportPerUnit: +U.$('#sTr').value || 0, focusSilverValue: num('sFocusVal'), dailyBonus: +U.$('#sDaily').value || 0, maxAgeHours: +U.$('#sAge').value || 12, cacheMinutes: num('sCache'), proxyUrl: U.$('#sProxy').value.trim() });
+      Object.assign(f, { taxPremiumPct: num('sTaxP'), taxNoPremiumPct: num('sTaxN'), setupFeePct: num('sSetup'), craftingFee: +U.$('#sFee').value || 0, transportPerUnit: +U.$('#sTr').value || 0, focusSilverValue: num('sFocusVal'), dailyBonus: +U.$('#sDaily').value || 0, maxAgeHours: +U.$('#sAge').value || 12, cacheMinutes: num('sCache'), proxyUrl: U.$('#sProxy').value.trim(), privateUrl: U.$('#sPrivUrl').value.trim(), privateKey: U.$('#sPrivKey').value.trim() });
       U.$$('[data-min]').forEach(i => f.minutes[i.dataset.min] = +i.value || 0);
       f.demand = { days: +U.$('#dDays').value || 3, sharePct: +U.$('#dShare').value || 30, confidencePct: +U.$('#dConf').value || 80, salvagePct: +U.$('#dSalv').value || 0 };
       SM.storage.saveProfile(p); SM.storage.savePrefs(f);
@@ -218,6 +220,14 @@
     U.$$('#tabs button').forEach(b => b.onclick = () => go(b.dataset.view));
     document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
     U.$('#refreshMarket').onclick = refreshMarket;
+    document.addEventListener('click', async e => {
+      if (e.target.id !== 'sPrivTest') return;
+      const out = U.$('#sPrivOut'); out.textContent = 'Probando…';
+      SM.api.configure({ privateUrl: U.$('#sPrivUrl').value.trim(), privateKey: U.$('#sPrivKey').value.trim() });
+      const r = await SM.api.privateStats();
+      out.innerHTML = r.ok ? `<span class="pos">Conectada.</span> ${r.rows.toLocaleString('es-CL')} precios de ${r.items.toLocaleString('es-CL')} objetos · ${r.sales} ventas tuyas · último dato recibido: ${r.last_received ? U.esc(SM.market.ageText(r.last_received)) : 'todavía ninguno'}.${(r.unknown_locations || []).length ? ' <span class="warn">Mercados sin nombre: ' + U.esc(r.unknown_locations.join(', ')) + ' (avísame para agregarlos).</span>' : ''} Guarda los ajustes para usarla.`
+        : `<span class="neg">No funcionó: ${U.esc(r.error)}</span>`;
+    });
     U.$('#modalClose').onclick = U.closeModal;
     U.$('#modal').onclick = e => { if (e.target.id === 'modal') U.closeModal(); };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') U.closeModal(); });
